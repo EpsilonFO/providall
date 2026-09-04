@@ -36,8 +36,9 @@ OpenRouter, Groq, Ollama, vLLM).
 ## Installation
 
 ```bash
-# Python (uv)
-uv add "git+ssh://git@github.com/EpsilonFO/providall.git" --tag v0.1.0 --subdirectory python
+# Python (uv) — le sous-dossier passe par le fragment d'URL, pas par un
+# drapeau : `uv add --subdirectory` n'existe pas.
+uv add "providall @ git+ssh://git@github.com/EpsilonFO/providall.git#subdirectory=python" --tag v0.1.0
 
 # pip
 pip install "providall @ git+ssh://git@github.com/EpsilonFO/providall.git@v0.1.0#subdirectory=python"
@@ -45,6 +46,16 @@ pip install "providall @ git+ssh://git@github.com/EpsilonFO/providall.git@v0.1.0
 # TypeScript (npm) — `dist/` est commité, donc aucune étape de build
 npm install github:EpsilonFO/providall#v0.1.0
 ```
+
+uv écrit alors dans le `pyproject.toml` du projet consommateur :
+
+```toml
+[tool.uv.sources]
+providall = { git = "ssh://git@github.com/EpsilonFO/providall.git", subdirectory = "python", tag = "v0.1.0" }
+```
+
+Pour monter de version : changer le tag, puis `uv lock --upgrade-package providall`
+(ou `npm install github:EpsilonFO/providall#vX.Y.Z`).
 
 Le package TypeScript n'a **aucune dépendance runtime** (`fetch` brut) ; zod est
 un pair optionnel, atteint via l'interface Standard Schema. Le package Python
