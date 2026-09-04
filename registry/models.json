@@ -1,0 +1,183 @@
+{
+  "$comment": [
+    "Un modèle = une ligne. Ce qui n'est pas écrit est hérité du fournisseur,",
+    "lui-même hérité de son protocole.",
+    "",
+    "`price_in`/`price_out` sont en dollars par million de jetons. ABSENTS =",
+    "tarif inconnu : `cost_usd` vaudra alors null, jamais un faux 0. Ne jamais",
+    "écrire 0 pour dire « je ne sais pas ».",
+    "",
+    "`id_verified: false` = identifiant recopié d'une annonce, jamais confirmé",
+    "auprès du fournisseur. La CLI l'affiche « À VÉRIFIER ».",
+    "",
+    "`price_cache_read` par défaut = price_in / 10 (tarif Anthropic usuel)."
+  ],
+
+  "opus": {
+    "provider": "anthropic",
+    "model_id": "claude-opus-5",
+    "price_in": 5.0,
+    "price_out": 25.0,
+    "note": "raisonnement adaptatif actif par défaut ; contexte 1M"
+  },
+  "sonnet": {
+    "provider": "anthropic",
+    "model_id": "claude-sonnet-5",
+    "price_in": 2.0,
+    "price_out": 10.0,
+    "note": "tarif 2/10 (table Anthropic) ; monumia notait 3/15 après le 2026-08-31 — À REVÉRIFIER sur la page de tarifs"
+  },
+  "haiku": {
+    "provider": "anthropic",
+    "model_id": "claude-haiku-4-5",
+    "price_in": 1.0,
+    "price_out": 5.0,
+    "overrides": {
+      "caps": { "effort": false, "thinking": "budget", "temperature": true }
+    },
+    "note": "génération 4.5 : `effort` errore, le raisonnement se règle en budget_tokens ; contexte 200K"
+  },
+  "fable": {
+    "provider": "anthropic",
+    "model_id": "claude-fable-5-1",
+    "price_in": 10.0,
+    "price_out": 50.0,
+    "price_cache_read": 0.25,
+    "overrides": {
+      "caps": { "forced_tool_choice": false }
+    },
+    "note": "tool_choice any/tool → 400 : la lib dégrade en auto + instruction ; raisonnement toujours actif"
+  },
+  "opus-4.8": {
+    "provider": "anthropic",
+    "model_id": "claude-opus-4-8",
+    "price_in": 5.0,
+    "price_out": 25.0,
+    "note": "thinking adaptive à poser explicitement (omis = pas de raisonnement, contrairement à Opus 5)"
+  },
+  "sonnet-4.6": {
+    "provider": "anthropic",
+    "model_id": "claude-sonnet-4-6",
+    "price_in": 3.0,
+    "price_out": 15.0,
+    "overrides": {
+      "caps": { "temperature": true },
+      "wire": { "effort_values": ["low", "medium", "high", "max"] }
+    },
+    "note": "pas de `xhigh` sur la génération 4.6 (arrivé avec Opus 4.7)"
+  },
+
+  "gpt-luna": {
+    "provider": "openai",
+    "model_id": "gpt-5.6-luna",
+    "price_in": 1.25,
+    "price_out": 10.0,
+    "id_verified": false
+  },
+  "gpt-terra": {
+    "provider": "openai",
+    "model_id": "gpt-5.6-terra",
+    "price_in": 0.25,
+    "price_out": 2.0,
+    "id_verified": false
+  },
+
+  "ds-flash": {
+    "provider": "deepseek",
+    "model_id": "deepseek-v4-flash",
+    "price_in": 0.28,
+    "price_out": 0.42,
+    "note": "id confirmé : déjà en production chez monumia"
+  },
+  "ds-pro": {
+    "provider": "deepseek",
+    "model_id": "deepseek-v4-pro",
+    "price_in": 0.55,
+    "price_out": 2.2,
+    "note": "id confirmé ; contexte 1M"
+  },
+
+  "glm": {
+    "provider": "zai",
+    "model_id": "glm-5.3",
+    "id_verified": false,
+    "note": "tarif à renseigner après confirmation chez z.ai"
+  },
+  "glm-flash": {
+    "provider": "zai",
+    "model_id": "glm-5.3-flash",
+    "id_verified": false,
+    "note": "tarif à renseigner"
+  },
+
+  "gemini-flash": {
+    "provider": "gemini",
+    "model_id": "gemini-3-flash",
+    "id_verified": false,
+    "note": "tarif à renseigner"
+  },
+  "gemini-pro": {
+    "provider": "gemini",
+    "model_id": "gemini-3-pro",
+    "id_verified": false,
+    "note": "tarif à renseigner"
+  },
+
+  "grok": {
+    "provider": "xai",
+    "model_id": "grok-4",
+    "id_verified": false,
+    "note": "tarif à renseigner"
+  },
+  "grok-fast": {
+    "provider": "xai",
+    "model_id": "grok-4-fast",
+    "id_verified": false,
+    "note": "tarif à renseigner"
+  },
+
+  "kimi-k2.7": {
+    "provider": "moonshot",
+    "model_id": "kimi-k2.7",
+    "price_in": 0.6,
+    "price_out": 2.5,
+    "id_verified": false
+  },
+  "kimi-k3": {
+    "provider": "moonshot",
+    "model_id": "kimi-k3",
+    "price_in": 1.0,
+    "price_out": 4.0,
+    "id_verified": false
+  },
+
+  "mistral": {
+    "provider": "mistral",
+    "model_id": "mistral-large-latest",
+    "id_verified": false,
+    "note": "alias glissant côté Mistral ; tarif à renseigner"
+  },
+  "mistral-medium": {
+    "provider": "mistral",
+    "model_id": "mistral-medium-latest",
+    "id_verified": false,
+    "note": "tarif à renseigner"
+  },
+
+  "or-glm": {
+    "provider": "openrouter",
+    "model_id": "z-ai/glm-5.3-flash",
+    "price_in": 0.07,
+    "price_out": 0.25,
+    "overrides": { "caps": { "structured": "json_schema" } },
+    "note": "id, tarif et response_format relevés sur /api/v1/models le 2026-08-28"
+  },
+  "or-kimi": {
+    "provider": "openrouter",
+    "model_id": "moonshotai/kimi-k2.6",
+    "price_in": 0.95,
+    "price_out": 4.0,
+    "overrides": { "caps": { "structured": "json_schema" } },
+    "note": "k2.7 n'existe pas chez OpenRouter (seul k2.7-code) ; relevé le 2026-08-28"
+  }
+}

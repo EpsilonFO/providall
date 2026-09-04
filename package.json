@@ -1,0 +1,41 @@
+{
+  "name": "providall",
+  "version": "0.1.0",
+  "description": "Appel LLM multi-provider réutilisable : un registre, deux protocoles, une API.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EpsilonFO/providall.git"
+  },
+  "engines": { "node": ">=20" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "bin": { "providall": "./dist/cli.js" },
+  "files": ["dist", "registry"],
+  "sideEffects": false,
+  "scripts": {
+    "gen": "node scripts/gen-registry.mjs",
+    "build": "npm run gen && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "node scripts/gen-registry.mjs --check && npm run typecheck && npm run test && npm run build && node scripts/check-version.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0",
+    "zod": "^4.0.0"
+  },
+  "keywords": ["llm", "anthropic", "openai", "claude", "multi-provider"]
+}

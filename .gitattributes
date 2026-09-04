@@ -1,0 +1,6 @@
+# Build commité pour que `npm install github:…` marche sans étape de build
+# (et avec `npm ci --ignore-scripts`, Vercel, Docker). Ce n'est pas du code à
+# relire : la CI vérifie qu'il correspond à `src/`.
+dist/** linguist-generated=true -diff
+src/registry.data.ts linguist-generated=true -diff
+python/src/providall/_registry_data.py linguist-generated=true -diff

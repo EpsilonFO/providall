@@ -1,0 +1,65 @@
+[project]
+name = "providall"
+version = "0.1.0"
+description = "Appel LLM multi-provider réutilisable : un registre, deux protocoles, une API."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Félix Ollivier" }]
+dependencies = [
+    "anthropic>=1.0.0",
+    "openai>=3.0.0",
+    "pydantic>=2.10",
+    "python-dotenv>=1.0.0",
+]
+
+[project.urls]
+Repository = "https://github.com/EpsilonFO/providall"
+
+[project.scripts]
+providall = "providall.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pyright>=1.1.0",
+    "ruff>=0.9.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.9"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = "src"
+module-name = "providall"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: appelle un vrai fournisseur (PROVIDALL_INTEGRATION=1 pour l'activer)",
+]
+filterwarnings = ["error::DeprecationWarning"]
+
+# Style repris de monumia/backend : même dépôt d'origine, mêmes réflexes.
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.per-file-ignores]
+# Le registre généré est de la donnée : ni tri d'imports ni reformatage.
+"src/providall/_registry_data.py" = ["E501"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"
+include = ["src", "tests"]
+exclude = [".venv"]

@@ -1,0 +1,92 @@
+name: CI
+
+# Déclencheurs repris de monumia : `push` limité à main couvre les pushs
+# directs et les merges, tout le reste passe par `pull_request`. On évite ainsi
+# de lancer deux fois le même commit.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ts:
+    name: TypeScript (tsc + Vitest + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      # Le registre est de la donnée partagée : si les deux fichiers générés
+      # ne correspondent plus à `registry/*.json`, `npm run gen` a été oublié
+      # et les deux packages divergeraient silencieusement.
+      - name: Registre à jour
+        run: node scripts/gen-registry.mjs --check
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Vitest
+        run: npm run test
+
+      - name: Build
+        run: npx tsc -p tsconfig.build.json
+
+      # `dist/` est COMMITÉ pour que `npm install github:…` marche sans étape
+      # de build (et avec `npm ci --ignore-scripts`, Vercel, Docker). Il doit
+      # donc correspondre à `src/` à chaque commit.
+      - name: dist/ à jour
+        run: git diff --exit-code dist src/registry.data.ts
+
+  python:
+    name: Python (Ruff + Pyright + Pytest)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: python
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - run: uv sync --group dev
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Pyright
+        run: uv run pyright
+
+      # La suite ne touche aucun réseau : la fixture `clean_env` purge les
+      # variables et coupe le chargement du `.env`. Aucun secret nécessaire.
+      - name: Pytest
+        run: uv run pytest -q
+
+  release:
+    name: Cohérence des versions
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ts, python]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/check-version.mjs
