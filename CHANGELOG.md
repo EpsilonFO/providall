@@ -2,6 +2,25 @@
 
 Un seul tag versionne les deux packages (Python et TypeScript).
 
+## [0.2.0]
+
+### DeepSeek : piloter le raisonnement de V4
+
+- L'entrée `deepseek` du registre déclare enfin son paramètre d'effort :
+  `reasoning_effort` sur l'échelle `low|high|max`. Jusqu'ici elle héritait
+  d'`openai_compat` (`effort_param: null`), donc tout `effort` passé à
+  `complete()` était jeté avant l'envoi et V4 restait sur son défaut —
+  thinking activé, effort `high`.
+- `caps.temperature: false` chez DeepSeek : en mode thinking, l'API refuse
+  `temperature`, `top_p`, `presence_penalty` et `frequency_penalty`.
+- Nouvelle clé de wire `thinking_toggle` (`Wire.thinkingToggle` /
+  `Wire.thinking_toggle`). `reasoning_effort` ne descend pas sous `low` :
+  `effort: "none"` chez DeepSeek envoie donc `thinking: { type: "disabled" }`
+  et coupe la chaîne de pensée, au lieu d'être ramené à `low`. C'est ce qui
+  permet à un appel de routage d'outils de dire « ne réfléchis pas ».
+- `medium` et `xhigh` restent ramenés à la valeur la plus proche de l'échelle
+  DeepSeek par `clampEffort` / `clamp_effort`, comme chez OpenAI.
+
 ## [0.1.0] — non publié
 
 Première version. Phases 0 à 2 du plan.

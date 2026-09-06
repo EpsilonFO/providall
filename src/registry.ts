@@ -68,6 +68,7 @@ export const PROTOCOL_DEFAULTS: Record<Protocol, ProtocolDefaults> = {
       maxTokensParam: "max_tokens",
       effortParam: "output_config",
       effortValues: ["low", "medium", "high", "xhigh", "max"],
+      thinkingToggle: null,
     },
     maxTokens: 16000,
     effort: null,
@@ -85,7 +86,12 @@ export const PROTOCOL_DEFAULTS: Record<Protocol, ProtocolDefaults> = {
       forced_tool_choice: true,
       stream: true,
     },
-    wire: { maxTokensParam: "max_tokens", effortParam: null, effortValues: [] },
+    wire: {
+      maxTokensParam: "max_tokens",
+      effortParam: null,
+      effortValues: [],
+      thinkingToggle: null,
+    },
     maxTokens: 16000,
     effort: null,
   },
@@ -96,6 +102,7 @@ const WIRE_KEYS: Record<string, keyof Wire> = {
   max_tokens_param: "maxTokensParam",
   effort_param: "effortParam",
   effort_values: "effortValues",
+  thinking_toggle: "thinkingToggle",
 };
 
 function mergeCaps(base: Caps, layer?: Partial<Record<string, unknown>>): Caps {
@@ -117,6 +124,7 @@ function mergeWire(base: Wire, layer?: Partial<Record<string, unknown>>): Wire {
     if (!cible) continue;
     if (cible === "effortValues") out.effortValues = value as readonly string[];
     else if (cible === "effortParam") out.effortParam = value as string | null;
+    else if (cible === "thinkingToggle") out.thinkingToggle = value as Wire["thinkingToggle"];
     else out.maxTokensParam = value as string;
   }
   return out;

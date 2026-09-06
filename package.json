@@ -1,6 +1,6 @@
 {
   "name": "providall",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Appel LLM multi-provider réutilisable : un registre, deux protocoles, une API.",
   "type": "module",
   "license": "MIT",
@@ -8,7 +8,9 @@
     "type": "git",
     "url": "git+https://github.com/EpsilonFO/providall.git"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,8 +22,13 @@
     }
   },
   "types": "./dist/index.d.ts",
-  "bin": { "providall": "./dist/cli.js" },
-  "files": ["dist", "registry"],
+  "bin": {
+    "providall": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "registry"
+  ],
   "sideEffects": false,
   "scripts": {
     "gen": "node scripts/gen-registry.mjs",
@@ -37,5 +44,11 @@
     "vitest": "^3.2.0",
     "zod": "^4.0.0"
   },
-  "keywords": ["llm", "anthropic", "openai", "claude", "multi-provider"]
+  "keywords": [
+    "llm",
+    "anthropic",
+    "openai",
+    "claude",
+    "multi-provider"
+  ]
 }

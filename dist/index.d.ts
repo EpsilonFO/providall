@@ -35,5 +35,5 @@ export type { Adapter, BuiltRequest, Request } from "./providers/index.js";
 export { EFFORTS } from "./types.js";
 export type { Caps, CompleteOptions, ContentPart, Effort, Env, FetchLike, FinishReason, InferSchema, JsonSchema, Logger, Message, ModelSpec, Prompt, Protocol, ProviderSpec, Response, Role, Schema, StandardSchemaV1, Structured, Thinking, ToolCall, ToolChoice, ToolDef, ToolHandler, TryResult, Usage, Wire, } from "./types.js";
 export type { ModelAlias, ProviderName } from "./registry.data.js";
-export declare const VERSION = "0.1.0";
+export declare const VERSION = "0.2.0";
 //# sourceMappingURL=index.d.ts.map

@@ -59,6 +59,9 @@ class Wire:
     max_tokens_param: str
     effort_param: str | None
     effort_values: tuple[str, ...]
+    # Fournisseur dont `effort: "none"` se dit par un interrupteur dédié
+    # (`thinking.type = disabled` chez DeepSeek), hors échelle d'effort.
+    thinking_toggle: str | None = None
 
 
 @dataclass(frozen=True)

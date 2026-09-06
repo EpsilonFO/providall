@@ -69,9 +69,11 @@ describe("build", () => {
     expect(b.body["max_tokens"]).toBeUndefined();
   });
 
-  it("température omise chez OpenAI", () => {
+  it("température omise chez OpenAI et DeepSeek", () => {
+    // Refusée en mode thinking chez DeepSeek, non par défaut chez OpenAI.
     expect(build(req("gpt-terra", { temperature: 0 })).body["temperature"]).toBeUndefined();
-    expect(build(req("ds-flash", { temperature: 0 })).body["temperature"]).toBe(0);
+    expect(build(req("ds-flash", { temperature: 0 })).body["temperature"]).toBeUndefined();
+    expect(build(req("glm-flash", { temperature: 0 })).body["temperature"]).toBe(0);
   });
 
   it("reasoning_effort chez OpenAI, ramené à son échelle", () => {
@@ -87,7 +89,25 @@ describe("build", () => {
   });
 
   it("effort ignoré quand le provider ne le gère pas", () => {
-    expect(build(req("ds-flash", { effort: "high" })).body["reasoning_effort"]).toBeUndefined();
+    expect(build(req("glm-flash", { effort: "high" })).body["reasoning_effort"]).toBeUndefined();
+  });
+
+  it("deepseek : effort none coupe le thinking, low passe en reasoning_effort", () => {
+    const none = build(req("ds-flash", { effort: "none" }));
+    expect(none.body["thinking"]).toEqual({ type: "disabled" });
+    expect(none.body["reasoning_effort"]).toBeUndefined();
+
+    const low = build(req("ds-flash", { effort: "low" }));
+    expect(low.body["reasoning_effort"]).toBe("low");
+    expect(low.body["thinking"]).toBeUndefined();
+
+    // `medium` n'existe pas chez DeepSeek : ramené, jamais rejeté.
+    const medium = build(req("ds-flash", { effort: "medium" }));
+    expect(["low", "high"]).toContain(medium.body["reasoning_effort"]);
+
+    // L'interrupteur est propre à DeepSeek : ailleurs, `none` reste un effort.
+    expect(build(req("gpt-terra", { effort: "none" })).body["thinking"]).toBeUndefined();
+    expect(build(req("gpt-terra", { effort: "none" })).body["reasoning_effort"]).toBe("none");
   });
 });
 

@@ -138,4 +138,4 @@ export type {
 
 export type { ModelAlias, ProviderName } from "./registry.data.js";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";

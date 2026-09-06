@@ -91,15 +91,23 @@ class ChatCompletionsAdapter:
             body["temperature"] = req.temperature
 
         if spec.caps.effort:
-            effort = clamp_effort(req.effort or spec.effort, spec.wire)
-            if effort:
-                if spec.wire.effort_param == "reasoning_effort":
-                    body["reasoning_effort"] = effort
-                elif spec.wire.effort_param == "openrouter_reasoning":
-                    # Paramètre unifié d'OpenRouter, hors schéma OpenAI. Sans
-                    # lui, un modèle à raisonnement dépense tout son budget de
-                    # sortie en chaîne de pensée : 405 s par appel, mesuré.
-                    body["extra_body"] = {"reasoning": {"effort": effort}}
+            voulu = req.effort or spec.effort
+            if voulu == "none" and spec.wire.thinking_toggle == "deepseek":
+                # DeepSeek V4 : « none » n'est pas sur l'échelle de
+                # reasoning_effort — c'est l'interrupteur qui coupe la chaîne
+                # de pensée.
+                body["thinking"] = {"type": "disabled"}
+            else:
+                effort = clamp_effort(voulu, spec.wire)
+                if effort:
+                    if spec.wire.effort_param == "reasoning_effort":
+                        body["reasoning_effort"] = effort
+                    elif spec.wire.effort_param == "openrouter_reasoning":
+                        # Paramètre unifié d'OpenRouter, hors schéma OpenAI.
+                        # Sans lui, un modèle à raisonnement dépense tout son
+                        # budget de sortie en chaîne de pensée : 405 s par
+                        # appel, mesuré.
+                        body["extra_body"] = {"reasoning": {"effort": effort}}
 
         if req.tools:
             body["tools"] = [

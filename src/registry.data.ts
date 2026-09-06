@@ -123,10 +123,23 @@ export const PROVIDERS_DATA = {
     ],
     "default_model": "deepseek-v4-flash",
     "key_url": "https://platform.deepseek.com/api_keys",
+    "caps": {
+      "effort": true,
+      "temperature": false
+    },
+    "wire": {
+      "effort_param": "reasoning_effort",
+      "effort_values": [
+        "low",
+        "high",
+        "max"
+      ],
+      "thinking_toggle": "deepseek"
+    },
     "defaults": {
       "max_tokens": 32000
     },
-    "note": "mesuré : 8 000 jetons de reasoning_content avant d'écrire, d'où le budget doublé"
+    "note": "V4 : thinking activé par défaut (effort high, ~8 000 jetons de reasoning_content, d'où le budget doublé). reasoning_effort low|high|max ; effort none → thinking.type=disabled. temperature refusée en mode thinking."
   },
   "openrouter": {
     "protocol": "openai_compat",

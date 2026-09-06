@@ -34,6 +34,7 @@ export const PROTOCOL_DEFAULTS = {
             maxTokensParam: "max_tokens",
             effortParam: "output_config",
             effortValues: ["low", "medium", "high", "xhigh", "max"],
+            thinkingToggle: null,
         },
         maxTokens: 16000,
         effort: null,
@@ -51,7 +52,12 @@ export const PROTOCOL_DEFAULTS = {
             forced_tool_choice: true,
             stream: true,
         },
-        wire: { maxTokensParam: "max_tokens", effortParam: null, effortValues: [] },
+        wire: {
+            maxTokensParam: "max_tokens",
+            effortParam: null,
+            effortValues: [],
+            thinkingToggle: null,
+        },
         maxTokens: 16000,
         effort: null,
     },
@@ -61,6 +67,7 @@ const WIRE_KEYS = {
     max_tokens_param: "maxTokensParam",
     effort_param: "effortParam",
     effort_values: "effortValues",
+    thinking_toggle: "thinkingToggle",
 };
 function mergeCaps(base, layer) {
     if (!layer)
@@ -88,6 +95,8 @@ function mergeWire(base, layer) {
             out.effortValues = value;
         else if (cible === "effortParam")
             out.effortParam = value;
+        else if (cible === "thinkingToggle")
+            out.thinkingToggle = value;
         else
             out.maxTokensParam = value;
     }

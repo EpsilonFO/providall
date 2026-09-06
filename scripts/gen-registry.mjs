@@ -53,7 +53,12 @@ const CAP_KEYS = new Set([
   "forced_tool_choice",
   "stream",
 ]);
-const WIRE_KEYS = new Set(["max_tokens_param", "effort_param", "effort_values"]);
+const WIRE_KEYS = new Set([
+  "max_tokens_param",
+  "effort_param",
+  "effort_values",
+  "thinking_toggle",
+]);
 const DEFAULT_KEYS = new Set(["max_tokens", "effort"]);
 
 const errors = [];

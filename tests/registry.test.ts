@@ -162,6 +162,7 @@ describe("clampEffort", () => {
     maxTokensParam: "max_tokens",
     effortParam: "x",
     effortValues: values,
+    thinkingToggle: null,
   });
 
   it.each([

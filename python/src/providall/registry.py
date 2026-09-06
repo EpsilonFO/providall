@@ -40,6 +40,7 @@ PROTOCOL_DEFAULTS: dict[str, dict[str, Any]] = {
             "max_tokens_param": "max_tokens",
             "effort_param": "output_config",
             "effort_values": ["low", "medium", "high", "xhigh", "max"],
+            "thinking_toggle": None,
         },
         "defaults": {"max_tokens": 16000, "effort": None},
     },
@@ -60,6 +61,7 @@ PROTOCOL_DEFAULTS: dict[str, dict[str, Any]] = {
             "max_tokens_param": "max_tokens",
             "effort_param": None,
             "effort_values": [],
+            "thinking_toggle": None,
         },
         "defaults": {"max_tokens": 16000, "effort": None},
     },
@@ -83,6 +85,7 @@ def _wire(protocol: str, *couches: dict[str, Any] | None) -> Wire:
         max_tokens_param=valeurs["max_tokens_param"],
         effort_param=valeurs["effort_param"],
         effort_values=tuple(valeurs["effort_values"]),
+        thinking_toggle=valeurs["thinking_toggle"],
     )
 
 

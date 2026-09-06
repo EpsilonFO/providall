@@ -42,6 +42,9 @@ export type Wire = {
     maxTokensParam: string;
     effortParam: string | null;
     effortValues: readonly string[];
+    /** Fournisseur dont `effort: "none"` se dit par un interrupteur dédié
+     *  (`thinking.type = disabled` chez DeepSeek), hors échelle d'effort. */
+    thinkingToggle: "deepseek" | null;
 };
 export type ProviderSpec = {
     name: string;

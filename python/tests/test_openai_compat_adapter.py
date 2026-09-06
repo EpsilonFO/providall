@@ -44,9 +44,11 @@ def test_max_completion_tokens_chez_openai():
     assert "max_tokens" not in corps
 
 
-def test_temperature_omise_chez_openai():
+def test_temperature_omise_chez_openai_et_deepseek():
+    """Refusée en mode thinking chez DeepSeek, non par défaut chez OpenAI."""
     assert "temperature" not in ADAPTER.build(req("gpt-terra", temperature=0))
-    assert ADAPTER.build(req("ds-flash", temperature=0))["temperature"] == 0
+    assert "temperature" not in ADAPTER.build(req("ds-flash", temperature=0))
+    assert ADAPTER.build(req("glm-flash", temperature=0))["temperature"] == 0
 
 
 def test_reasoning_effort_chez_openai():
@@ -63,8 +65,26 @@ def test_extra_body_reserve_a_openrouter():
 
 
 def test_effort_ignore_quand_le_provider_ne_le_gere_pas():
-    corps = ADAPTER.build(req("ds-flash", effort="high"))
+    corps = ADAPTER.build(req("glm-flash", effort="high"))
     assert "reasoning_effort" not in corps
+
+
+def test_deepseek_effort_none_coupe_le_thinking():
+    none = ADAPTER.build(req("ds-flash", effort="none"))
+    assert none["thinking"] == {"type": "disabled"}
+    assert "reasoning_effort" not in none
+
+    low = ADAPTER.build(req("ds-flash", effort="low"))
+    assert low["reasoning_effort"] == "low"
+    assert "thinking" not in low
+
+    # `medium` n'existe pas chez DeepSeek : ramené, jamais rejeté.
+    assert ADAPTER.build(req("ds-flash", effort="medium"))["reasoning_effort"] in ("low", "high")
+
+    # L'interrupteur est propre à DeepSeek : ailleurs, `none` reste un effort.
+    openai = ADAPTER.build(req("gpt-terra", effort="none"))
+    assert "thinking" not in openai
+    assert openai["reasoning_effort"] == "none"
 
 
 # ---- response_format tri-état -------------------------------------------

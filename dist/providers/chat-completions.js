@@ -71,16 +71,24 @@ export function build(req) {
     if (req.temperature !== null && spec.caps.temperature)
         body["temperature"] = req.temperature;
     if (spec.caps.effort) {
-        const effort = clampEffort(req.effort ?? spec.effort, spec.wire);
-        if (effort) {
-            if (spec.wire.effortParam === "reasoning_effort") {
-                body["reasoning_effort"] = effort;
-            }
-            else if (spec.wire.effortParam === "openrouter_reasoning") {
-                // Paramètre unifié d'OpenRouter, hors schéma OpenAI. Sans lui, un
-                // modèle à raisonnement dépense tout son budget de sortie en chaîne de
-                // pensée : 405 s par appel, mesuré.
-                body["reasoning"] = { effort };
+        const voulu = req.effort ?? spec.effort;
+        if (voulu === "none" && spec.wire.thinkingToggle === "deepseek") {
+            // DeepSeek V4 : « none » n'est pas sur l'échelle de reasoning_effort —
+            // c'est l'interrupteur qui coupe la chaîne de pensée.
+            body["thinking"] = { type: "disabled" };
+        }
+        else {
+            const effort = clampEffort(voulu, spec.wire);
+            if (effort) {
+                if (spec.wire.effortParam === "reasoning_effort") {
+                    body["reasoning_effort"] = effort;
+                }
+                else if (spec.wire.effortParam === "openrouter_reasoning") {
+                    // Paramètre unifié d'OpenRouter, hors schéma OpenAI. Sans lui, un
+                    // modèle à raisonnement dépense tout son budget de sortie en chaîne
+                    // de pensée : 405 s par appel, mesuré.
+                    body["reasoning"] = { effort };
+                }
             }
         }
     }

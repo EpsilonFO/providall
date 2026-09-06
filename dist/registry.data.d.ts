@@ -97,10 +97,19 @@ export declare const PROVIDERS_DATA: {
         readonly aliases: readonly ["ds"];
         readonly default_model: "deepseek-v4-flash";
         readonly key_url: "https://platform.deepseek.com/api_keys";
+        readonly caps: {
+            readonly effort: true;
+            readonly temperature: false;
+        };
+        readonly wire: {
+            readonly effort_param: "reasoning_effort";
+            readonly effort_values: readonly ["low", "high", "max"];
+            readonly thinking_toggle: "deepseek";
+        };
         readonly defaults: {
             readonly max_tokens: 32000;
         };
-        readonly note: "mesuré : 8 000 jetons de reasoning_content avant d'écrire, d'où le budget doublé";
+        readonly note: "V4 : thinking activé par défaut (effort high, ~8 000 jetons de reasoning_content, d'où le budget doublé). reasoning_effort low|high|max ; effort none → thinking.type=disabled. temperature refusée en mode thinking.";
     };
     readonly openrouter: {
         readonly protocol: "openai_compat";
