@@ -95,8 +95,12 @@ class ChatCompletionsAdapter:
             if voulu == "none" and spec.wire.thinking_toggle == "deepseek":
                 # DeepSeek V4 : « none » n'est pas sur l'échelle de
                 # reasoning_effort — c'est l'interrupteur qui coupe la chaîne
-                # de pensée.
-                body["thinking"] = {"type": "disabled"}
+                # de pensée. Par `extra_body` : `thinking` n'est pas un argument
+                # de `create()`, le SDK le refusait (TypeError) avant l'envoi.
+                body["extra_body"] = {
+                    **body.get("extra_body", {}),
+                    "thinking": {"type": "disabled"},
+                }
             else:
                 effort = clamp_effort(voulu, spec.wire)
                 if effort:

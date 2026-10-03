@@ -72,8 +72,9 @@ def test_effort_ramene_a_l_echelle_du_modele():
 
 def test_temperature_omise_par_defaut():
     """La famille Claude 5 rejette toute température non par défaut (400)."""
-    assert "temperature" not in ADAPTER.build(req("sonnet", temperature=0))
-    assert ADAPTER.build(req("haiku", temperature=0))["temperature"] == 0
+    assert "extra_body" not in ADAPTER.build(req("sonnet", temperature=0))
+    # Par `extra_body` : le SDK 1.x n'a plus `temperature` dans sa signature.
+    assert ADAPTER.build(req("haiku", temperature=0))["extra_body"] == {"temperature": 0}
 
 
 def test_sortie_structuree_par_output_config():
