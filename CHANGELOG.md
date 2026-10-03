@@ -2,6 +2,25 @@
 
 Un seul tag versionne les deux packages (Python et TypeScript).
 
+## [0.3.1]
+
+### Python : deux paramètres que le SDK refusait avant l'envoi
+
+Les adaptateurs Python passent le corps au SDK par `create(**body)` : une clé
+qui n'est pas un argument nommé lève un `TypeError` avant tout envoi. Les tests
+de `build()` ne le voyaient pas, puisqu'ils ne regardent que le dictionnaire.
+TypeScript n'est pas concerné : son corps part tel quel par `fetch`.
+
+- DeepSeek, `effort="none"` : `thinking: {type: disabled}` passe désormais par
+  `extra_body`. Depuis la 0.2.0, couper le raisonnement de DeepSeek en Python
+  échouait systématiquement.
+- Anthropic : le SDK 1.x a retiré `temperature` de la signature de
+  `messages.create()`. La température (Haiku 4.5, Sonnet 4.6) passe donc elle
+  aussi par `extra_body`. L'API l'accepte toujours.
+- Nouveau test `test_sdk_signatures.py` : pour chaque modèle du registre, chaque
+  effort et les options qui ajoutent des clés, le corps ne doit porter que des
+  arguments du SDK qui l'envoie.
+
 ## [0.3.0]
 
 ### `extra_body` : les paramètres que providall ne modélise pas

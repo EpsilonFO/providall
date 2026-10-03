@@ -109,7 +109,10 @@ class AnthropicAdapter:
                 }
 
         if req.temperature is not None and spec.caps.temperature:
-            body["temperature"] = req.temperature
+            # Par `extra_body` : le SDK (1.x) a retiré `temperature` de la
+            # signature de `create()` et lèverait un TypeError avant l'envoi,
+            # alors que l'API l'accepte toujours sur les modèles qui la gèrent.
+            body["extra_body"] = {"temperature": req.temperature}
 
         if req.tools:
             body["tools"] = [
@@ -125,7 +128,7 @@ class AnthropicAdapter:
         if req.extra:
             # Même passage qu'en Chat Completions : le SDK fusionne `extra_body`
             # au premier niveau du JSON envoyé.
-            body["extra_body"] = dict(req.extra)
+            body["extra_body"] = {**body.get("extra_body", {}), **req.extra}
 
         return body
 

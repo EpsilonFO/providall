@@ -71,19 +71,20 @@ def test_effort_ignore_quand_le_provider_ne_le_gere_pas():
 
 def test_deepseek_effort_none_coupe_le_thinking():
     none = ADAPTER.build(req("ds-flash", effort="none"))
-    assert none["thinking"] == {"type": "disabled"}
+    # Par `extra_body`, que le SDK fusionne au premier niveau du JSON.
+    assert none["extra_body"] == {"thinking": {"type": "disabled"}}
     assert "reasoning_effort" not in none
 
     low = ADAPTER.build(req("ds-flash", effort="low"))
     assert low["reasoning_effort"] == "low"
-    assert "thinking" not in low
+    assert "extra_body" not in low
 
     # `medium` n'existe pas chez DeepSeek : ramené, jamais rejeté.
     assert ADAPTER.build(req("ds-flash", effort="medium"))["reasoning_effort"] in ("low", "high")
 
     # L'interrupteur est propre à DeepSeek : ailleurs, `none` reste un effort.
     openai = ADAPTER.build(req("gpt-terra", effort="none"))
-    assert "thinking" not in openai
+    assert "extra_body" not in openai
     assert openai["reasoning_effort"] == "none"
 
 

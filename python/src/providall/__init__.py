@@ -78,7 +78,7 @@ from .types import (
     Wire,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 
 def complete_json(schema: Any, prompt: Any, **kw: Any) -> StructuredResponse[Any]:
