@@ -232,6 +232,13 @@ export type CompleteOptions = {
     logger?: Logger;
     apiKey?: string;
     baseUrl?: string;
+    /**
+     * Paramètres propres à un fournisseur, ajoutés tels quels au corps de la
+     * requête après tout le reste. Échappatoire pour ce que providall ne
+     * modélise pas : `prompt_cache_key` chez Mistral, un réglage de sécurité,
+     * un paramètre sorti ce matin. Il l'emporte en cas de conflit.
+     */
+    extraBody?: Record<string, unknown>;
     onResponse?: (response: Response) => void;
 };
 //# sourceMappingURL=types.d.ts.map

@@ -110,6 +110,10 @@ export function build(req) {
         // Sans ça, un flux ne rapporte aucun usage : ni coût ni jetons.
         body["stream_options"] = { include_usage: true };
     }
+    // En dernier : un paramètre propre au fournisseur l'emporte sur ce que la
+    // lib a construit (cf. `CompleteOptions.extraBody`).
+    if (req.extraBody)
+        Object.assign(body, req.extraBody);
     return {
         url: joinUrl(req.baseUrl, "/chat/completions"),
         // Serveur local sans authentification : pas d'en-tête plutôt qu'un

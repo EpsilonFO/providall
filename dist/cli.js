@@ -18,7 +18,7 @@ import { ProvidallError } from "./errors.js";
 import { consoleLogger } from "./log.js";
 import { formatCost } from "./pricing.js";
 import { PROVIDERS, priceKnown } from "./registry.js";
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 /** `.env` puis `.env.local` (qui prime), sans écraser l'environnement du process. */
 function loadEnvFiles() {
     const charges = [];

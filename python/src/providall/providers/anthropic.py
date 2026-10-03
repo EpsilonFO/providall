@@ -122,6 +122,11 @@ class AnthropicAdapter:
             ]
             body["tool_choice"] = {"type": {"required": "any", "none": "none"}.get(choix, "auto")}
 
+        if req.extra:
+            # Même passage qu'en Chat Completions : le SDK fusionne `extra_body`
+            # au premier niveau du JSON envoyé.
+            body["extra_body"] = dict(req.extra)
+
         return body
 
     # ---------------------------------------------------------------- parse

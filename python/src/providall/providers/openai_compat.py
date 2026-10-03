@@ -128,6 +128,12 @@ class ChatCompletionsAdapter:
             # Sans ça, un flux ne rapporte aucun usage : ni coût ni jetons.
             body["stream_options"] = {"include_usage": True}
 
+        if req.extra:
+            # Le SDK refuse un argument nommé qu'il ne connaît pas, mais fusionne
+            # `extra_body` dans le JSON envoyé : sur le fil, ces clés arrivent
+            # au premier niveau, exactement comme en TypeScript.
+            body["extra_body"] = {**body.get("extra_body", {}), **req.extra}
+
         return body
 
     # ---------------------------------------------------------------- parse

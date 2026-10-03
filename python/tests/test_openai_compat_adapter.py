@@ -281,3 +281,32 @@ def test_accumulateur_rend_des_deltas():
     acc = ChunkAccumulator()
     evenements = acc.feed(_chunk(content="a"))
     assert evenements == [TextDelta("a")]
+
+
+# ---- extra_body ----------------------------------------------------------
+
+
+def test_extra_passe_par_extra_body_du_sdk():
+    corps = ADAPTER.build(req("mistral-small", extra={"prompt_cache_key": "app"}))
+    assert corps["extra_body"] == {"prompt_cache_key": "app"}
+    assert "prompt_cache_key" not in corps  # le SDK refuserait l'argument nommé
+    assert "extra_body" not in ADAPTER.build(req("mistral-small"))
+
+
+def test_extra_conserve_l_effort_openrouter_et_l_emporte():
+    corps = ADAPTER.build(req("or-glm", extra={"provider": {"order": ["z-ai"]}}))
+    assert corps["extra_body"] == {
+        "reasoning": {"effort": "medium"},
+        "provider": {"order": ["z-ai"]},
+    }
+    corps = ADAPTER.build(req("or-glm", extra={"reasoning": {"effort": "low"}}))
+    assert corps["extra_body"] == {"reasoning": {"effort": "low"}}
+
+
+def test_mistral_small_effort_none_coupe_le_raisonnement():
+    assert ADAPTER.build(req("mistral-small", effort="none"))["reasoning_effort"] == "none"
+    assert ADAPTER.build(req("mistral-small", effort="high"))["reasoning_effort"] == "high"
+    # `low` n'est pas sur l'échelle : ramené à la valeur la plus proche.
+    assert ADAPTER.build(req("mistral-small", effort="low"))["reasoning_effort"] == "none"
+    # Les autres Mistral ne déclarent pas d'effort.
+    assert "reasoning_effort" not in ADAPTER.build(req("mistral", effort="high"))

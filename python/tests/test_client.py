@@ -336,3 +336,12 @@ def test_outil_sur_provider_sans_outils():
     )
     with pytest.raises(CapabilityError, match="outils"):
         providall.complete("a", model="sansoutils:m", tools=[{"name": "x", "parameters": {}}])
+
+
+def test_extra_body_du_client_remplace_par_celui_de_l_appel():
+    env = {"ANTHROPIC_API_KEY": "sk-x"}
+    client = Client("sonnet", extra_body={"a": 1}, env=env)
+    assert client.prepare("salut").extra == {"a": 1}
+    assert client.prepare("salut", extra_body={"b": 2}).extra == {"b": 2}
+    assert client.with_options(max_tokens=10).prepare("salut").extra == {"a": 1}
+    assert Client("sonnet", env=env).prepare("salut").extra == {}

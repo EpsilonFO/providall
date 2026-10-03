@@ -26,4 +26,4 @@ export { defaultEnv, envBool, envNum, envStr, normalizeEffort } from "./env.js";
 export { APIError, AuthError, BadRequestError, CapabilityError, ConfigError, EmptyResponseError, MissingKeyError, NetworkError, NotFoundError, OutputValidationError, ProvidallError, RateLimitError, RefusalError, ServerError, TimeoutError, UnknownModelError, fromHttp, toProvidallError, } from "./errors.js";
 export { adapterFor, ADAPTERS } from "./providers/index.js";
 export { EFFORTS } from "./types.js";
-export const VERSION = "0.2.0";
+export const VERSION = "0.3.0";
