@@ -219,3 +219,9 @@ def test_vide_par_troncature_ne_l_est_pas():
         ADAPTER.parse(anthropic_reply("", stop_reason="max_tokens"), req())
     assert exc.value.retryable is False
     assert "augmenter max_tokens" in str(exc.value)
+
+
+def test_extra_passe_par_extra_body_du_sdk():
+    corps = ADAPTER.build(req(extra={"metadata": {"user_id": "u1"}}))
+    assert corps["extra_body"] == {"metadata": {"user_id": "u1"}}
+    assert "extra_body" not in ADAPTER.build(req())

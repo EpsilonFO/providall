@@ -56,6 +56,7 @@ export function prepare(input, opts = {}) {
         apiKey: cle,
         baseUrl: url,
         label: opts.label ?? spec.alias,
+        extraBody: opts.extraBody ?? null,
     };
     checkCapabilities(req);
     return req;

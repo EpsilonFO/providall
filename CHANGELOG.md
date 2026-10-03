@@ -2,6 +2,31 @@
 
 Un seul tag versionne les deux packages (Python et TypeScript).
 
+## [0.3.0]
+
+### `extra_body` : les paramètres que providall ne modélise pas
+
+- Nouvelle option d'appel et de client : `extra_body=` (Python) / `extraBody`
+  (TypeScript). Ses clés sont ajoutées au corps de la requête **après** tout ce
+  que la lib a construit, et l'emportent en cas de conflit. C'est l'échappatoire
+  pour un paramètre propre à un fournisseur : `prompt_cache_key` chez Mistral
+  (sans lui, aucun cache de préfixe), un réglage de sécurité, un paramètre sorti
+  ce matin. `Request.extra` existait côté Python mais aucun adaptateur ne le
+  lisait : c'est lui qui porte l'option désormais.
+- Python : passé au SDK par `extra_body`, qu'il fusionne au premier niveau du
+  JSON. Sur le fil, le résultat est identique à TypeScript, où les clés sont
+  posées directement dans le corps. Chez OpenRouter, l'effort déjà placé dans
+  `extra_body` est conservé.
+- Celui de l'appel **remplace** celui du client, il ne s'y ajoute pas (même
+  règle que les autres options de `createClient`).
+
+### Mistral Small 4
+
+- Alias `mistral-small` → `mistral-small-2603`, tarif 0,15 / 0,60 $ par million
+  de jetons. Le modèle raisonne : `caps.effort` et `reasoning_effort` sur
+  l'échelle `none|high`, donc `effort: "none"` coupe la chaîne de pensée.
+  `id_verified: false` tant qu'un appel réel n'a pas abouti.
+
 ## [0.2.0]
 
 ### DeepSeek : piloter le raisonnement de V4

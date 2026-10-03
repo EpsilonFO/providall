@@ -337,3 +337,10 @@ describe("streaming", () => {
     expect(blocs[0]).toEqual({ type: "thinking", thinking: "hm", signature: "S" });
   });
 });
+
+describe("extraBody", () => {
+  it("ajouté au premier niveau du corps", () => {
+    const b = build(req("sonnet", { extraBody: { metadata: { user_id: "u1" } } }));
+    expect(b.body["metadata"]).toEqual({ user_id: "u1" });
+  });
+});

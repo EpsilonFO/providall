@@ -60,6 +60,7 @@ class Client:
         on_response: hooks.ResponseHook | None = None,
         label: str | None = None,
         env: dict[str, str] | None = None,
+        extra_body: dict[str, Any] | None = None,
     ) -> None:
         self.model = model
         self.role = role
@@ -73,6 +74,7 @@ class Client:
         self.on_response = on_response
         self.label = label
         self.env = env
+        self.extra_body = extra_body
 
     def with_options(self, **overrides: Any) -> Client:
         """Copie du client, quelques réglages changés. Le client d'origine est intact."""
@@ -89,6 +91,7 @@ class Client:
             "on_response": self.on_response,
             "label": self.label,
             "env": self.env,
+            "extra_body": self.extra_body,
         }
         courant.update(overrides)
         modele = courant.pop("model")
@@ -114,6 +117,7 @@ class Client:
         label: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
+        extra_body: dict[str, Any] | None = None,
     ) -> Request:
         """Résout tout et vérifie tout, sans rien envoyer.
 
@@ -152,6 +156,9 @@ class Client:
             api_key=cle,
             base_url=url,
             label=label or self.label or spec.alias,
+            # Celui de l'appel REMPLACE celui du client, il ne s'y ajoute pas :
+            # même règle que `createClient` en TypeScript.
+            extra=dict(extra_body if extra_body is not None else self.extra_body or {}),
         )
         check_capabilities(req)
         return req

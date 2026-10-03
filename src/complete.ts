@@ -84,6 +84,7 @@ export function prepare(input: Prompt, opts: CompleteOptions = {}): Request {
     apiKey: cle,
     baseUrl: url,
     label: opts.label ?? spec.alias,
+    extraBody: opts.extraBody ?? null,
   };
   checkCapabilities(req);
   return req;

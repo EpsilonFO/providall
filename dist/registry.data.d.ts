@@ -322,6 +322,23 @@ export declare const MODELS_DATA: {
         readonly id_verified: false;
         readonly note: "tarif à renseigner";
     };
+    readonly "mistral-small": {
+        readonly provider: "mistral";
+        readonly model_id: "mistral-small-2603";
+        readonly price_in: 0.15;
+        readonly price_out: 0.6;
+        readonly overrides: {
+            readonly caps: {
+                readonly effort: true;
+            };
+            readonly wire: {
+                readonly effort_param: "reasoning_effort";
+                readonly effort_values: readonly ["none", "high"];
+            };
+        };
+        readonly id_verified: false;
+        readonly note: "Mistral Small 4, raisonnement hybride : reasoning_effort none|high (doc Mistral). Tarif relevé le 2026-10-03 ; lecture en cache à 10 %, seulement si la requête porte `prompt_cache_key` (extra_body)";
+    };
     readonly "or-glm": {
         readonly provider: "openrouter";
         readonly model_id: "z-ai/glm-5.3-flash";

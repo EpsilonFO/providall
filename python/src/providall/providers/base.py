@@ -64,6 +64,10 @@ class Request:
     base_url: str = ""
     label: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
+    """Paramètres propres à un fournisseur, ajoutés tels quels au corps de la
+    requête après tout le reste (`extra_body=` à l'appel). Échappatoire pour ce
+    que providall ne modélise pas : `prompt_cache_key` chez Mistral, un réglage
+    de sécurité, un paramètre sorti ce matin. Il l'emporte en cas de conflit."""
 
 
 class Adapter(Protocol):

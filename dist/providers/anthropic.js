@@ -109,6 +109,10 @@ export function build(req) {
     }
     if (req.stream)
         body["stream"] = true;
+    // En dernier : un paramètre propre au fournisseur l'emporte sur ce que la
+    // lib a construit (cf. `CompleteOptions.extraBody`).
+    if (req.extraBody)
+        Object.assign(body, req.extraBody);
     return {
         url: joinUrl(req.baseUrl, "/messages"),
         headers: { "x-api-key": req.apiKey, "anthropic-version": API_VERSION },

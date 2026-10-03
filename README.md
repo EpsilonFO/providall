@@ -205,6 +205,19 @@ providall.complete([
 Traduites en bloc `image` (Anthropic) ou en `image_url` / data URI (compat).
 `caps.vision` faux → `CapabilityError` **avant** l'envoi.
 
+### Paramètres propres à un fournisseur
+
+Ce que providall ne modélise pas passe par `extra_body` / `extraBody` : ajouté
+au corps de la requête après tout le reste, il l'emporte en cas de conflit.
+
+```python
+providall.complete(prompt, model="mistral-small", extra_body={"prompt_cache_key": "mon-app"})
+```
+
+```ts
+await complete(prompt, { model: "mistral-small", extraBody: { prompt_cache_key: "mon-app" } });
+```
+
 ### Client réutilisable
 
 ```python

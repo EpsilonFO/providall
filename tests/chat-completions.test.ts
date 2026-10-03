@@ -349,3 +349,24 @@ describe("streaming", () => {
     expect(parse(ADAPTER.finalize(etat), req()).usage.inputTokens).toBe(3);
   });
 });
+
+describe("extraBody", () => {
+  it("ajouté au premier niveau du corps, après tout le reste", () => {
+    const b = build(req("mistral-small", { extraBody: { prompt_cache_key: "app" } }));
+    expect(b.body["prompt_cache_key"]).toBe("app");
+    expect(build(req("mistral-small")).body["prompt_cache_key"]).toBeUndefined();
+  });
+
+  it("l'emporte sur ce que la lib a construit", () => {
+    const b = build(req("or-glm", { extraBody: { reasoning: { effort: "low" } } }));
+    expect(b.body["reasoning"]).toEqual({ effort: "low" });
+  });
+
+  it("mistral-small : effort none coupe le raisonnement", () => {
+    expect(build(req("mistral-small", { effort: "none" })).body["reasoning_effort"]).toBe("none");
+    expect(build(req("mistral-small", { effort: "high" })).body["reasoning_effort"]).toBe("high");
+    // `low` n'est pas sur l'échelle : ramené à la valeur la plus proche.
+    expect(build(req("mistral-small", { effort: "low" })).body["reasoning_effort"]).toBe("none");
+    expect(build(req("mistral", { effort: "high" })).body["reasoning_effort"]).toBeUndefined();
+  });
+});

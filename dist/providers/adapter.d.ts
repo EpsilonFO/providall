@@ -33,6 +33,8 @@ export type Request = {
     apiKey: string;
     baseUrl: string;
     label: string;
+    /** Ajouté au corps après tout le reste (`extraBody` à l'appel). */
+    extraBody?: Record<string, unknown> | null;
 };
 export type BuiltRequest = {
     url: string;
