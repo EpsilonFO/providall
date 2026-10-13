@@ -17,6 +17,7 @@ de monumia, qui n'était isolé que pour ça.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol
@@ -284,15 +285,33 @@ def _message_utile(exc: BaseException) -> str:
     Les quatre APIs enveloppent différemment (`error.message`, `message`,
     `detail`) : on tente, sinon on garde le `str()` tronqué.
     """
-    corps = getattr(exc, "body", None)
-    if isinstance(corps, dict):
-        erreur = corps.get("error")
-        if isinstance(erreur, dict) and isinstance(erreur.get("message"), str):
-            return erreur["message"][:400]
-        for cle in ("message", "detail"):
-            if isinstance(corps.get(cle), str):
-                return corps[cle][:400]
-    return str(exc)[:400] or type(exc).__name__
+    return api_message(getattr(exc, "body", None)) or str(exc)[:400] or type(exc).__name__
+
+
+def api_message(corps: Any) -> str:
+    """Message utile d'un corps d'erreur JSON, ou `""`. Pendant d'`extractApiMessage`."""
+    if not isinstance(corps, dict):
+        return ""
+    erreur = corps.get("error")
+    if isinstance(erreur, dict) and isinstance(erreur.get("message"), str):
+        return erreur["message"][:400]
+    for cle in ("message", "detail"):
+        if isinstance(corps.get(cle), str):
+            return corps[cle][:400]
+    # 422 de validation (TypeSafe) : `detail` est une liste `{loc, msg}` dont
+    # chaque entrée nomme le champ fautif — c'est lui qu'il faut corriger.
+    details = corps.get("detail")
+    if isinstance(details, list) and details:
+        morceaux = []
+        for d in details:
+            e = d if isinstance(d, dict) else {}
+            ou = (
+                ".".join(str(x) for x in e.get("loc", [])) if isinstance(e.get("loc"), list) else ""
+            )
+            quoi = e["msg"] if isinstance(e.get("msg"), str) else json.dumps(d, ensure_ascii=False)
+            morceaux.append(f"{ou} : {quoi}" if ou else quoi)
+        return " ; ".join(morceaux)[:400]
+    return ""
 
 
 # --------------------------------------------------------------------------
@@ -340,6 +359,15 @@ def sdk_client(kind: str, *, api_key: str, base_url: str, timeout: float) -> Any
         client = AsyncOpenAI(
             api_key=api_key or "no-key", base_url=base_url or None, timeout=timeout, max_retries=0
         )
+    elif kind == "httpx2":
+        # Transport brut de la famille System One, qui n'a pas de SDK ici.
+        import httpx2
+
+        client = httpx2.Client(timeout=timeout)
+    elif kind == "httpx2_async":
+        import httpx2
+
+        client = httpx2.AsyncClient(timeout=timeout)
     else:  # pragma: no cover — garde-fou de programmation
         raise ValueError(f"client SDK inconnu : {kind}")
 
@@ -398,6 +426,7 @@ __all__ = [
     "Adapter",
     "Request",
     "ToolDef",
+    "api_message",
     "as_tool_defs",
     "check_capabilities",
     "clear_client_cache",

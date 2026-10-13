@@ -12,7 +12,7 @@ deux langages. Le reste suit la convention du langage.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -22,7 +22,10 @@ if TYPE_CHECKING:
 Effort = Literal["none", "low", "medium", "high", "xhigh", "max"]
 EFFORTS: tuple[Effort, ...] = ("none", "low", "medium", "high", "xhigh", "max")
 
-Protocol = Literal["anthropic", "openai_compat"]
+# Deux familles. Chat : `anthropic`, `openai_compat` — `complete()` et ses
+# dérivés. System One : `systemone` — `decide()` seulement, puisqu'un modèle de
+# décision ne produit pas de texte.
+Protocol = Literal["anthropic", "openai_compat", "systemone"]
 Structured = Literal["json_schema", "json_object", "prompt"]
 Thinking = Literal["adaptive", "budget", "none"]
 Role = Literal["system", "user", "assistant", "tool"]
@@ -262,8 +265,97 @@ class TryStructured[T]:
         return self.data is not None and self.response.error is None
 
 
+# --------------------------------------------------------------------------
+# System One
+# --------------------------------------------------------------------------
+
+DecisionState = str | Mapping[str, Any] | Sequence[Any]
+"""Ce que le modèle évalue : du texte, ou des données structurées (journal de
+conversation, fiche, état de l'application). Texte seulement — pas d'image."""
+
+Instructions = str | Mapping[str, Any] | Sequence[Any]
+"""Consigne d'une question, d'un critère ou d'un niveau. Un dict permet de
+mettre la question dans un champ et les données qu'elle cite dans d'autres."""
+
+Question = Mapping[str, Any]
+"""`{"type": "noul" | "choice" | "score", "instructions": …, "criteria": …}` —
+au format du fil, tel que le construisent `noul()`, `choice()` et `score()`."""
+
+
+@dataclass(frozen=True)
+class NoulAnswer:
+    """Oui/non : `noul` est la probabilité du oui, entre 0 et 1."""
+
+    noul: float
+    type: Literal["noul"] = "noul"
+
+
+@dataclass(frozen=True)
+class ChoiceAnswer:
+    choice: str
+    """L'option la plus probable."""
+    probabilities: dict[str, float]
+    confidence: float
+    """Certitude dérivée de la distribution — à ne pas confondre avec la
+    probabilité du choix."""
+    type: Literal["choice"] = "choice"
+
+
+@dataclass(frozen=True)
+class ScoreAnswer:
+    score: float
+    """Moyenne pondérée des niveaux, indexés à partir de 0 : peut tomber entre deux."""
+    legend: dict[str, str]
+    """Indice du niveau (en chaîne) → son libellé."""
+    probabilities: dict[str, float]
+    confidence: float
+    type: Literal["score"] = "score"
+
+
+Answer = NoulAnswer | ChoiceAnswer | ScoreAnswer
+
+
+@dataclass
+class Decision:
+    """Retour de `decide()`, quel que soit le fournisseur System One."""
+
+    answers: dict[str, Answer] = field(default_factory=dict)
+    model: str = ""
+    """Alias demandé (`jev`), ou `provider:model_id` hors registre."""
+    model_id: str = ""
+    """Identifiant envoyé au fournisseur (`jev-latest`)."""
+    served_model: str = ""
+    """Version qui a réellement répondu (`jev-1.13.0`). Un alias comme
+    `jev-latest` bouge à chaque release : c'est celle-ci qu'il faut journaliser
+    à côté des seuils de confiance."""
+    provider: str = ""
+    usage: Usage = field(default_factory=Usage)
+    latency_s: float = 0.0
+    cost_usd: float | None = None
+    """Coût FACTURÉ quand le fournisseur le rend (`usage.cost` chez OpenRouter),
+    sinon calculé au tarif du registre ; `None` si l'un et l'autre manquent."""
+    attempts: int = 1
+    request_id: str | None = None
+    """`x-typesafe-request-id`, ou l'`id` de génération d'OpenRouter."""
+    raw: Any = None
+    error: ProvidallError | None = None
+    """Renseigné uniquement par `try_decide`, qui ne lève jamais."""
+
+    @property
+    def ok(self) -> bool:
+        return self.error is None
+
+
 __all__ = [
     "EFFORTS",
+    "Answer",
+    "ChoiceAnswer",
+    "Decision",
+    "DecisionState",
+    "Instructions",
+    "NoulAnswer",
+    "Question",
+    "ScoreAnswer",
     "Caps",
     "Effort",
     "FinishReason",

@@ -2,12 +2,12 @@
 
     PROVIDALL_INTEGRATION=1 uv run pytest -m integration -v
 
-Un `complete` et un `complete_json` par provider dont la clé est posée : les
-autres sont sautés. C'est le test qui répond aux questions que la suite hors
-ligne ne peut pas trancher — un identifiant `id_verified: false` existe-t-il
-vraiment, `output_config` passe-t-il sur l'endpoint Anthropic de z.ai, un
-modèle à raisonnement d'OpenAI accepte-t-il outils ET `reasoning_effort` en
-Chat Completions (§14 du plan).
+Un `complete` et un `complete_json` par provider dont la clé est posée, et un
+`decide` par porte System One : les autres sont sautés. C'est le test qui
+répond aux questions que la suite hors ligne ne peut pas trancher — un
+identifiant `id_verified: false` existe-t-il vraiment, `output_config`
+passe-t-il sur l'endpoint Anthropic de z.ai, un modèle à raisonnement d'OpenAI
+accepte-t-il outils ET `reasoning_effort` en Chat Completions (§14 du plan).
 """
 
 from __future__ import annotations
@@ -113,3 +113,24 @@ def test_zai_anthropic_output_config():
         pytest.skip("ZAI_API_KEY absente")
     reponse = providall.complete("Réponds : OK", model="zai_anthropic:glm-5.3", max_tokens=64)
     assert reponse.text
+
+
+# Famille System One : une décision par porte. C'est ce test qui fait passer
+# `id_verified` à vrai pour `jev` et `or-jev` dans registry/models.json.
+@pytest.mark.parametrize("alias", ["jev", "or-jev"])
+def test_decide(alias: str):
+    _spec(alias)
+    d = providall.decide(
+        "Bonjour, ma commande n'est jamais arrivée et je veux être remboursé.",
+        {
+            "remboursement": providall.noul("Le client demande-t-il à être remboursé ?"),
+            "service": providall.choice("Quel service ?", ["livraison", "technique"]),
+        },
+        model=alias,
+        label="integration",
+    )
+    remboursement, service = d.answers["remboursement"], d.answers["service"]
+    assert isinstance(remboursement, providall.NoulAnswer) and remboursement.noul > 0.5
+    assert isinstance(service, providall.ChoiceAnswer) and service.choice == "livraison"
+    assert d.served_model and d.usage.input_tokens > 0
+    assert d.cost_usd is not None

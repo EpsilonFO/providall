@@ -34,10 +34,10 @@ def models_table(*, only_available: bool = False) -> str:
     lignes.append("")
 
     entete = (
-        f"{'alias':<15} {'provider':<14} {'identifiant':<24} {'$/Mtok in/out':>15} "
+        f"{'alias':<15} {'provider':<20} {'identifiant':<24} {'$/Mtok in/out':>15} "
         f"{'clé':<5} {'id vérifié':<11} note"
     )
-    lignes += [entete, "-" * 130]
+    lignes += [entete, "-" * 136]
     for spec in list_models(only_available=only_available):
         tarif = (
             f"{spec.price_in:>7.2f}/{spec.price_out:<7.2f}"
@@ -45,7 +45,7 @@ def models_table(*, only_available: bool = False) -> str:
             else f"{'?':>7}/{'?':<7}"
         )
         lignes.append(
-            f"{spec.alias:<15} {spec.provider:<14} {spec.model_id:<24} {tarif} "
+            f"{spec.alias:<15} {spec.provider:<20} {spec.model_id:<24} {tarif} "
             f"{'oui' if spec.key_present else 'NON':<5} "
             f"{'oui' if spec.id_verified else 'À VÉRIFIER':<11} {spec.note}"
         )
@@ -58,6 +58,7 @@ def models_table(*, only_available: bool = False) -> str:
         "Changer de modèle : LLM_MODEL=<alias> dans .env, ou",
         "LLM_MODEL=<provider>:<identifiant> pour un modèle hors registre",
         "(ex. LLM_MODEL=zai:glm-5.4-flash, ou LLM_MODEL=openrouter:z-ai/glm-4.6).",
+        "Modèles System One (decide(), pas complete()) : LLM_MODEL_DECIDE=<alias>.",
     ]
     return "\n".join(lignes)
 

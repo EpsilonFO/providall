@@ -19,7 +19,7 @@ import pytest
 
 from providall.providers import adapter_for
 from providall.providers.base import Request, ToolDef
-from providall.registry import MODELS, resolve_spec
+from providall.registry import MODELS, is_system_one, resolve_spec
 from providall.types import EFFORTS, Message
 
 OUTIL = ToolDef(name="meteo", description="Prévisions", parameters={"type": "object"})
@@ -63,7 +63,9 @@ def _variantes(alias: str):
             )
 
 
-@pytest.mark.parametrize("alias", sorted(MODELS))
+# La famille System One n'est envoyée par aucun SDK (`httpx2` brut, corps
+# envoyé tel quel) : rien à vérifier de ce côté.
+@pytest.mark.parametrize("alias", sorted(a for a, m in MODELS.items() if not is_system_one(m)))
 def test_le_corps_ne_porte_que_des_arguments_du_sdk(alias: str):
     spec = resolve_spec(alias)
     acceptes = _arguments_du_sdk(spec.protocol)

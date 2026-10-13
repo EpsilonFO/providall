@@ -11,12 +11,15 @@ import logging
 from collections.abc import Callable
 
 from .pricing import format_cost
-from .types import Response
+from .types import Decision, Response
 
 logger = logging.getLogger("providall")
 
 ResponseHook = Callable[[Response], None]
 _hooks: list[ResponseHook] = []
+
+DecisionHook = Callable[[Decision], None]
+_decision_hooks: list[DecisionHook] = []
 
 
 def on_response(hook: ResponseHook) -> ResponseHook:
@@ -30,8 +33,19 @@ def on_response(hook: ResponseHook) -> ResponseHook:
     return hook
 
 
+def on_decision(hook: DecisionHook) -> DecisionHook:
+    """Pendant d'`on_response` pour `decide()` : appelé après chaque décision.
+
+    Séparé plutôt que mêlé : un hook écrit pour `Response` lit `text` et
+    `finish_reason`, qu'une `Decision` n'a pas.
+    """
+    _decision_hooks.append(hook)
+    return hook
+
+
 def clear_hooks() -> None:
     _hooks.clear()
+    _decision_hooks.clear()
 
 
 def emit(response: Response, *, label: str = "", extra: ResponseHook | None = None) -> None:
@@ -43,6 +57,37 @@ def emit(response: Response, *, label: str = "", extra: ResponseHook | None = No
             hook(response)
         except Exception:  # noqa: BLE001 — un hook cassé ne doit pas casser l'appel
             logger.exception("hook on_response en échec")
+
+
+def emit_decision(
+    decision: Decision, *, label: str = "", extra: DecisionHook | None = None
+) -> None:
+    logger.info("%s", decision_log_line(decision, label=label))
+    for hook in (*_decision_hooks, extra):
+        if hook is None:
+            continue
+        try:
+            hook(decision)
+        except Exception:  # noqa: BLE001 — un hook cassé ne doit pas casser l'appel
+            logger.exception("hook on_decision en échec")
+
+
+def decision_log_line(decision: Decision, *, label: str = "") -> str:
+    """`[label] provider:served_model 0.1s in=… out=… $0.000012 questions=3 attempts=1`"""
+    morceaux = [
+        f"[{label}]" if label else "",
+        f"{decision.provider}:{decision.served_model or decision.model_id}",
+        f"{decision.latency_s:.1f}s",
+        f"in={decision.usage.input_tokens}",
+        f"out={decision.usage.output_tokens}",
+        format_cost(decision.cost_usd),
+        f"questions={len(decision.answers)}",
+    ]
+    if decision.attempts > 1:
+        morceaux.append(f"attempts={decision.attempts}")
+    if decision.error is not None:
+        morceaux.append(f"error={type(decision.error).__name__}")
+    return " ".join(m for m in morceaux if m)
 
 
 def log_line(response: Response, *, label: str = "") -> str:
@@ -68,4 +113,15 @@ def log_line(response: Response, *, label: str = "") -> str:
     return " ".join(m for m in morceaux if m)
 
 
-__all__ = ["ResponseHook", "clear_hooks", "emit", "log_line", "logger", "on_response"]
+__all__ = [
+    "DecisionHook",
+    "ResponseHook",
+    "clear_hooks",
+    "decision_log_line",
+    "emit",
+    "emit_decision",
+    "log_line",
+    "logger",
+    "on_decision",
+    "on_response",
+]

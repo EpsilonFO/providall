@@ -42,7 +42,7 @@ const models = loadJson("models.json");
 
 /* ------------------------------- validation ------------------------------ */
 
-const PROTOCOLS = new Set(["anthropic", "openai_compat"]);
+const PROTOCOLS = new Set(["anthropic", "openai_compat", "systemone"]);
 const CAP_KEYS = new Set([
   "tools",
   "structured",
@@ -97,7 +97,10 @@ for (const [alias, m] of Object.entries(models)) {
     // contient « : » serait inatteignable.
     errors.push(`modèle ${alias}: un alias ne peut pas contenir « : »`);
   }
-  if (m.price_in === 0 || m.price_out === 0) {
+  // Un modèle System One ne facture pas sa sortie : ce 0-là est un tarif, pas
+  // une ignorance. Partout ailleurs, 0 reste refusé.
+  const sortieGratuite = providers[m.provider]?.protocol === "systemone";
+  if (m.price_in === 0 || (m.price_out === 0 && !sortieGratuite)) {
     errors.push(`modèle ${alias}: prix à 0 — omettre le champ pour dire « inconnu »`);
   }
   for (const key of Object.keys(m.overrides?.caps ?? {})) {

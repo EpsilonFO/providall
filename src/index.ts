@@ -10,6 +10,9 @@
  * ou `provider:identifiant` pour un modèle qui vient de sortir). Avec une
  * seule clé `*_API_KEY` posée, même `LLM_MODEL` est facultatif.
  *
+ * Pour un modèle de décision (System One : Jev), `decide()` remplace
+ * `complete()` — questions typées en entrée, probabilités en sortie.
+ *
  * La lib ne lit jamais de fichier `.env` : Next.js le fait lui-même, Node a
  * `process.loadEnvFile()`. Seule la CLI en charge un.
  */
@@ -33,6 +36,10 @@ export {
 } from "./json.js";
 export type { JsonOptions, JsonResult } from "./json.js";
 
+export { choice, decide, noul, prepareDecision, score, tryDecide } from "./decide.js";
+export { systemOneUrl } from "./providers/systemone.js";
+export type { DecisionRequest } from "./providers/systemone.js";
+
 export { defineTool, toolLoop, DEFAULT_MAX_TURNS } from "./tools.js";
 export type { Tool, ToolLoopOptions, ToolLoopResult } from "./tools.js";
 
@@ -47,6 +54,7 @@ export type {
 } from "./stream.js";
 
 export {
+  DECISION_MODEL_VAR,
   DEFAULT_RETRIES,
   DEFAULT_TIMEOUT_MS,
   apiKeyFor,
@@ -56,6 +64,7 @@ export {
   keyPresent,
   listModels,
   resolve,
+  resolveDecision,
   resolveModel,
 } from "./config.js";
 export type { EnvDefaults, Resolution, ResolveOptions } from "./config.js";
@@ -66,6 +75,7 @@ export {
   PROVIDERS,
   clampEffort,
   findProvider,
+  isSystemOne,
   listProviders,
   priceKnown,
   registerModel,
@@ -76,7 +86,7 @@ export {
 export type { SpecOverrides } from "./registry.js";
 
 export { CACHE_WRITE_MULTIPLIER, addCost, computeCost, formatCost } from "./pricing.js";
-export { consoleLogger, logLine, silentLogger } from "./log.js";
+export { consoleLogger, decisionLogLine, logLine, silentLogger } from "./log.js";
 export { formatIssues, harden, isSchema, parseJsonLoose, schemaInstruction, validate } from "./schema.js";
 export { defaultEnv, envBool, envNum, envStr, normalizeEffort } from "./env.js";
 
@@ -106,24 +116,39 @@ export type { Adapter, BuiltRequest, Request } from "./providers/index.js";
 
 export { EFFORTS } from "./types.js";
 export type {
+  Answer,
+  AnswerFor,
+  Answers,
   Caps,
+  ChoiceAnswer,
+  ChoiceQuestion,
   CompleteOptions,
   ContentPart,
+  DecideOptions,
+  Decision,
+  DecisionState,
   Effort,
   Env,
   FetchLike,
   FinishReason,
   InferSchema,
+  Instructions,
   JsonSchema,
   Logger,
   Message,
   ModelSpec,
+  NoulAnswer,
+  NoulQuestion,
   Prompt,
   Protocol,
   ProviderSpec,
+  Question,
+  Questions,
   Response,
   Role,
   Schema,
+  ScoreAnswer,
+  ScoreQuestion,
   StandardSchemaV1,
   Structured,
   Thinking,

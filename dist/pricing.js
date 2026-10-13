@@ -22,8 +22,14 @@ export function computeCost(spec, usage) {
 }
 export function formatCost(cost) {
     // Quatre décimales : un appel court coûte quelques dixièmes de centime, et
-    // « $0.00 » ne dit rien.
-    return cost === null ? "$?" : `$${cost.toFixed(4)}`;
+    // « $0.00 » ne dit rien. En dessous du centième de centime (une décision
+    // Jev coûte ~0,00001 $), deux chiffres significatifs : « $0.0000 » ne dirait
+    // rien non plus.
+    if (cost === null)
+        return "$?";
+    if (cost > 0 && cost < 1e-4)
+        return `$${cost.toFixed(1 - Math.floor(Math.log10(cost)))}`;
+    return `$${cost.toFixed(4)}`;
 }
 /** Somme de coûts : `null` (tarif inconnu) contamine, il ne vaut pas zéro. */
 export function addCost(a, b) {

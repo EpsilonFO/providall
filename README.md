@@ -27,11 +27,15 @@ déjà été écrite deux fois ici (une fois en Python, une fois en TypeScript) 
 la même architecture. providall est cette couche, écrite une fois, avec les
 leçons des deux.
 
-Pas de LiteLLM ni de LangChain : deux protocoles suffisent. Anthropic en API
-native — seul moyen d'avoir `output_config.format`, `output_config.effort`, le
-raisonnement adaptatif et `stop_reason=refusal` — et **Chat Completions** pour
-tous les autres (OpenAI, Gemini, xAI, Moonshot, z.ai, Mistral, DeepSeek,
-OpenRouter, Groq, Ollama, vLLM).
+Pas de LiteLLM ni de LangChain : pour le chat, deux protocoles suffisent.
+Anthropic en API native — seul moyen d'avoir `output_config.format`,
+`output_config.effort`, le raisonnement adaptatif et `stop_reason=refusal` — et
+**Chat Completions** pour tous les autres (OpenAI, Gemini, xAI, Moonshot, z.ai,
+Mistral, DeepSeek, OpenRouter, Groq, Ollama, vLLM).
+
+Un troisième, à part, pour les **modèles de décision** (famille System One :
+Jev, de TypeSafe), qui ne produisent pas de texte : `decide()`, voir
+[Décisions](#décisions-system-one).
 
 ## Installation
 
@@ -59,7 +63,8 @@ Pour monter de version : changer le tag, puis `uv lock --upgrade-package provida
 
 Le package TypeScript n'a **aucune dépendance runtime** (`fetch` brut) ; zod est
 un pair optionnel, atteint via l'interface Standard Schema. Le package Python
-utilise les SDK officiels `anthropic>=1` et `openai>=3`.
+utilise les SDK officiels `anthropic>=1` et `openai>=3`, et `httpx2` — que ces
+deux SDK tirent déjà — pour `decide()`.
 
 ## Configuration
 
@@ -74,8 +79,9 @@ ANTHROPIC_API_KEY=sk-ant-…
 |---|---|
 | `LLM_MODEL` | alias du registre (`sonnet`, `ds-flash`) ou `provider:model_id` (`zai:glm-5.4-flash`) — le seul levier obligatoire |
 | `LLM_MODEL_<RÔLE>` | modèle par rôle, utilisé quand l'appel passe `role=` |
-| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `MOONSHOT_API_KEY`, `ZAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY` | une clé par fournisseur |
-| `LLM_BASE_URL`, `LLM_API_KEY` | serveur OpenAI-compatible quelconque ; `<PROVIDER>_BASE_URL` surcharge un fournisseur connu |
+| `LLM_MODEL_DECIDE` | modèle de `decide()` (`jev`, `jev-1.13`, `or-jev`) — voir [Décisions](#décisions-system-one) |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `MOONSHOT_API_KEY`, `ZAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `TYPESAFE_API_KEY` | une clé par fournisseur |
+| `LLM_BASE_URL`, `LLM_API_KEY` | serveur OpenAI-compatible quelconque (chat seulement : jamais envoyés à un fournisseur System One) ; `<PROVIDER>_BASE_URL` surcharge un fournisseur connu |
 | `LLM_MAX_TOKENS`, `LLM_EFFORT`, `LLM_TEMPERATURE`, `LLM_TIMEOUT`, `LLM_RETRIES` | réglages globaux, tous surchargeables à l'appel |
 | `LLM_PROVIDER` | compat : seul → modèle par défaut du fournisseur ; avec un `LLM_MODEL` nu → `LLM_PROVIDER:LLM_MODEL` |
 | `LLM_DEBUG=1` | logs détaillés |
@@ -231,6 +237,78 @@ const client = createClient({ model: "sonnet", timeoutMs: 120_000, effort: "high
 await client.complete(prompt);
 ```
 
+## Décisions (System One)
+
+Un modèle System One ne génère pas de texte : il reçoit un **état** (texte ou
+JSON) et des **questions typées**, et rend des **probabilités calibrées**, en
+une passe (70 à 500 ms annoncés pour Jev, sortie non facturée). Classer, router, noter,
+filtrer — pas converser. D'où un point d'entrée à lui, `decide()`, à côté de
+`complete()`.
+
+```python
+from providall import decide, noul, choice, score
+
+d = decide(
+    "Mes virements échouent depuis 3 jours.",
+    {
+        "urgent": noul("Le message exprime-t-il de l'urgence ?"),
+        "service": choice("Quelle équipe doit traiter ?", {
+            "facturation": "Paiements, factures, remboursements",
+            "technique": "Bugs, pannes, intégrations",
+        }),
+        "colere": score("Agacement du client ?", ["Calme", "Agacé", "Furieux"]),
+    },
+)
+d.answers["service"].choice, d.answers["service"].confidence   # "facturation", 0.81
+d.answers["urgent"].noul                                       # 0.95 — probabilité du oui
+d.answers["colere"].score                                      # 1.05 — entre « Agacé » et « Furieux »
+d.cost_usd, d.latency_s, d.served_model                        # served_model : "jev-1.13.0"
+```
+
+```ts
+import { decide, noul, choice, score } from "providall";
+
+const d = await decide("Mes virements échouent depuis 3 jours.", {
+  urgent: noul("Le message exprime-t-il de l'urgence ?"),
+  service: choice("Quelle équipe doit traiter ?", ["facturation", "technique"]),
+});
+d.answers.service.choice; // typé "facturation" | "technique"
+```
+
+| Question | Rend |
+|---|---|
+| `noul(consigne, true=…, false=…)` (TS : `{ true, false }`) | `noul` : probabilité du oui |
+| `choice(consigne, options)` | `choice`, `probabilities`, `confidence` |
+| `score(consigne, niveaux)` | `score` (niveaux indexés depuis 0), `legend`, `probabilities`, `confidence` |
+
+**Deux portes, un format.** OpenRouter reprend l'API de TypeSafe à l'identique :
+
+| Alias | Fournisseur | Clé |
+|---|---|---|
+| `jev` (→ `jev-latest`), `jev-1.13` (épinglé) | TypeSafe | `TYPESAFE_API_KEY` |
+| `or-jev` (→ `typesafe/jev-1.13`) | OpenRouter | `OPENROUTER_API_KEY` |
+
+Passer de l'un à l'autre, c'est changer `LLM_MODEL_DECIDE`. Chez OpenRouter, le
+coût est celui **facturé** (`usage.cost`), pas recalculé.
+
+**Résolution** : argument > `LLM_MODEL_<RÔLE>` > `LLM_MODEL_DECIDE` >
+`LLM_MODEL` *s'il désigne un modèle System One* > une seule clé System One
+présente. Les deux familles ne se mélangent pas :
+
+- `complete()` sur Jev, ou `decide()` sur un modèle de chat → `CapabilityError`
+  avant tout envoi ;
+- `TYPESAFE_API_KEY` seule ne fait jamais partir `complete()` vers Jev ;
+- `OPENROUTER_API_KEY` seule vaut pour les deux : chat d'OpenRouter pour
+  `complete()`, Jev chez OpenRouter pour `decide()`.
+
+Le reste est la plomberie commune : retry (429, 529), erreurs typées (un 422
+nomme le champ fautif), `try_decide` / `tryDecide` qui ne lèvent jamais,
+`adecide` en Python, hooks (`on_decision` / `onDecision`), et le double de test
+(`decision_reply` / `decisionReply`).
+
+Un alias comme `jev-latest` bouge à chaque release : si des seuils de confiance
+ont été calés, épingler `jev-1.13` et journaliser `served_model`.
+
 ## Erreurs
 
 Une hiérarchie, les mêmes noms des deux côtés. `retryable` est porté par
@@ -271,11 +349,14 @@ providall ask "Dis bonjour" [--model X] [--json] [--stream] [--effort low]
 Le double de test est livré avec la lib.
 
 ```python
-from providall.testing import fake_provider, chat_reply
+from providall.testing import fake_provider, chat_reply, decision_reply
 
 with fake_provider(chat_reply("bonjour")) as faux:
     assert mon_code().text == "bonjour"
     assert faux.bodies[0]["model"] == "deepseek-v4-flash"
+
+with fake_provider(decision_reply({"urgent": {"type": "noul", "noul": 0.9}})):
+    assert mon_tri().answers["urgent"].noul == 0.9
 ```
 
 ```ts

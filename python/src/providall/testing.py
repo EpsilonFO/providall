@@ -78,7 +78,7 @@ class FakeAdapter:
 def fake_provider(*replies: Reply, protocol: str | None = None) -> Iterator[FakeAdapter]:
     """Remplace les adaptateurs le temps du bloc `with`.
 
-    Sans `protocol`, les DEUX protocoles sont remplacés : un test n'a pas à
+    Sans `protocol`, TOUS les protocoles sont remplacés : un test n'a pas à
     savoir lequel le modèle qu'il vise utilise.
     """
     originaux = dict(ADAPTERS)
@@ -95,7 +95,7 @@ def fake_provider(*replies: Reply, protocol: str | None = None) -> Iterator[Fake
 
 
 class _Multi:
-    """Vue sur les deux faux adaptateurs : agrège ce qui est parti, quel que soit le protocole."""
+    """Vue sur tous les faux adaptateurs : agrège ce qui est parti, quel que soit le protocole."""
 
     def __init__(self, adapters: dict[str, FakeAdapter]) -> None:
         self.adapters = adapters
@@ -192,11 +192,38 @@ def json_reply(payload: Any, **kw: Any) -> dict[str, Any]:
     return chat_reply(json.dumps(payload, ensure_ascii=False), **kw)
 
 
+def decision_reply(
+    answers: dict[str, dict[str, Any]],
+    *,
+    model: str = "jev-1.13.0",
+    input_tokens: int = 300,
+    output_tokens: int = 20,
+    cost: float | None = None,
+    id: str | None = None,
+    request_id: str | None = None,
+) -> dict[str, Any]:
+    """Réponse System One, au format du fil (`{"type": "noul", "noul": 0.9}`…).
+
+    `cost` imite le `usage.cost` d'OpenRouter, `id` son identifiant de
+    génération, `request_id` l'en-tête `x-typesafe-request-id`.
+    """
+    usage: dict[str, Any] = {"input_tokens": input_tokens, "output_tokens": output_tokens}
+    if cost is not None:
+        usage["cost"] = cost
+    corps: dict[str, Any] = {"model": model, "answers": answers, "usage": usage}
+    if id:
+        corps["id"] = id
+    if request_id:
+        corps["_request_id"] = request_id
+    return corps
+
+
 __all__ = [
     "FakeAdapter",
     "Reply",
     "anthropic_reply",
     "chat_reply",
+    "decision_reply",
     "fake_provider",
     "json_reply",
     "tool_call",

@@ -8,7 +8,7 @@
  */
 
 import { formatCost } from "./pricing.js";
-import type { Logger, Response } from "./types.js";
+import type { Decision, Logger, Response } from "./types.js";
 
 export const silentLogger: Logger = {
   debug: () => undefined,
@@ -40,5 +40,20 @@ export function logLine(response: Response, label = ""): string {
   morceaux.push(`finish=${response.finishReason}`);
   if (response.attempts > 1) morceaux.push(`attempts=${response.attempts}`);
   if (response.error) morceaux.push(`error=${response.error.name}`);
+  return morceaux.filter(Boolean).join(" ");
+}
+
+/** `[label] provider:servedModel 0.1s in=… out=… $0.000012 questions=3 attempts=1` */
+export function decisionLogLine(decision: Decision, label = ""): string {
+  const morceaux = [
+    label ? `[${label}]` : "",
+    `${decision.provider}:${decision.servedModel}`,
+    `${(decision.latencyMs / 1000).toFixed(1)}s`,
+    `in=${decision.usage.inputTokens}`,
+    `out=${decision.usage.outputTokens}`,
+    formatCost(decision.costUsd),
+    `questions=${Object.keys(decision.answers).length}`,
+  ];
+  if (decision.attempts > 1) morceaux.push(`attempts=${decision.attempts}`);
   return morceaux.filter(Boolean).join(" ");
 }

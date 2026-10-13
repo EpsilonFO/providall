@@ -173,6 +173,40 @@ export function jsonReply(payload: unknown, opts: Parameters<typeof chatReply>[1
   return chatReply(JSON.stringify(payload), opts);
 }
 
+/**
+ * Réponse System One. Les réponses se donnent sous la forme qu'elles ont sur le
+ * fil (`{ type: "noul", noul: 0.9 }`…) ; `cost` imite le `usage.cost`
+ * d'OpenRouter, `id` son identifiant de génération.
+ */
+export function decisionReply(
+  answers: Record<string, Record<string, unknown>>,
+  opts: {
+    model?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    cost?: number;
+    id?: string;
+    requestId?: string;
+  } = {},
+): Response {
+  const usage: Record<string, unknown> = {
+    input_tokens: opts.inputTokens ?? 300,
+    output_tokens: opts.outputTokens ?? 20,
+  };
+  if (opts.cost !== undefined) usage["cost"] = opts.cost;
+  const corps: Record<string, unknown> = {
+    model: opts.model ?? "jev-1.13.0",
+    answers,
+    usage,
+  };
+  if (opts.id) corps["id"] = opts.id;
+  return jsonRes(
+    corps,
+    200,
+    opts.requestId ? { "x-typesafe-request-id": opts.requestId } : {},
+  );
+}
+
 /** Environnement de test minimal : une clé, un modèle, rien d'autre. */
 export function testEnv(extra: Env = {}): Env {
   return { DEEPSEEK_API_KEY: "sk-test", LLM_MODEL: "ds-flash", ...extra };

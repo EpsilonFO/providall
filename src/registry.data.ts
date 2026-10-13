@@ -210,6 +210,24 @@ export const PROVIDERS_DATA = {
       "vision": false
     },
     "note": "n'importe quel serveur /chat/completions : poser LLM_BASE_URL (et LLM_MODEL)"
+  },
+  "typesafe": {
+    "protocol": "systemone",
+    "base_url": "https://api.typesafe.ai/v1",
+    "api_key_env": "TYPESAFE_API_KEY",
+    "aliases": [],
+    "default_model": "jev-latest",
+    "key_url": "https://console.typesafe.ai/keys",
+    "note": "famille System One : POST /v1/systemone (state + questions typées), aucune sortie texte — seul decide() l'atteint"
+  },
+  "openrouter_systemone": {
+    "protocol": "systemone",
+    "base_url": "https://openrouter.ai/api/v1",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "aliases": [],
+    "default_model": "typesafe/jev-1.13",
+    "key_url": "https://openrouter.ai/settings/keys",
+    "note": "System One API d'OpenRouter : format TypeSafe à l'identique, plus `id`, `provider` et `usage.cost` (coût facturé, préféré au tarif du registre). Même clé que `openrouter`, autre protocole"
   }
 } as const;
 
@@ -415,6 +433,30 @@ export const MODELS_DATA = {
       }
     },
     "note": "k2.7 n'existe pas chez OpenRouter (seul k2.7-code) ; relevé le 2026-08-28"
+  },
+  "jev": {
+    "provider": "typesafe",
+    "model_id": "jev-latest",
+    "price_in": 0.042,
+    "price_out": 0,
+    "id_verified": false,
+    "note": "System One. Alias mobile de TypeSafe (jev-1.13.0 au 2026-10-13) : épingler `jev-1.13` si des seuils de confiance ont été calés. Sortie non facturée ; contexte 64k (32k pour state + la plus longue question)"
+  },
+  "jev-1.13": {
+    "provider": "typesafe",
+    "model_id": "jev-1.13.0",
+    "price_in": 0.042,
+    "price_out": 0,
+    "id_verified": false,
+    "note": "System One, version épinglée — page Models de TypeSafe, relevé le 2026-10-13"
+  },
+  "or-jev": {
+    "provider": "openrouter_systemone",
+    "model_id": "typesafe/jev-1.13",
+    "price_in": 0.042,
+    "price_out": 0,
+    "id_verified": false,
+    "note": "System One via OpenRouter : id et tarif relevés sur /api/v1/models/typesafe/jev-1.13/endpoints le 2026-10-13 ; le coût réel vient de `usage.cost`"
   }
 } as const;
 

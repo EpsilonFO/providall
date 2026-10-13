@@ -37,7 +37,9 @@ est utilisable ce matin.
 **Un tarif absent veut dire « inconnu », pas « gratuit ».** Omettre `price_in`
 / `price_out` donne `cost_usd = null`. Écrire `0` est refusé par le générateur :
 un faux zéro se retrouve additionné dans un rapport de benchmark sans que
-personne ne le voie. `price_cache_read` vaut par défaut `price_in / 10`.
+personne ne le voie. `price_cache_read` vaut par défaut `price_in / 10`. Seule
+exception : `price_out: 0` d'un modèle System One, dont la sortie n'est
+réellement pas facturée.
 
 **`id_verified: false` par défaut pour un identifiant recopié d'une annonce.**
 La CLI l'affiche « À VÉRIFIER ». On le passe à `true` quand un appel réel a
@@ -55,6 +57,24 @@ modèle     (models.json, clé `overrides`)
 
 Recopier une valeur qui vaut déjà le défaut, c'est garantir qu'elle ne suivra
 pas la prochaine correction du protocole.
+
+## Deux familles
+
+`protocol` range un fournisseur dans une famille :
+
+| Protocole | Famille | Point d'entrée |
+|---|---|---|
+| `anthropic`, `openai_compat` | chat | `complete()`, `stream()`, `tool_loop()`, `complete_json()` |
+| `systemone` | décision (System One) | `decide()` seulement |
+
+Chaque famille a sa résolution (`LLM_MODEL` pour le chat, `LLM_MODEL_DECIDE`
+pour la décision) et sa règle « une seule clé présente ». Un même fournisseur
+qui sert les deux familles s'inscrit deux fois, une par protocole, avec la même
+clé : `openrouter` et `openrouter_systemone` partagent `OPENROUTER_API_KEY`,
+comme `zai` et `zai_anthropic` partagent `ZAI_API_KEY`.
+
+Les `caps` du protocole `systemone` sont toutes fausses : elles ne servent
+qu'à ce qu'un `complete()` égaré échoue proprement.
 
 ## Champs
 

@@ -2,6 +2,53 @@
 
 Un seul tag versionne les deux packages (Python et TypeScript).
 
+## [Non publié]
+
+### Famille System One : `decide()`
+
+Les modèles de décision ne produisent pas de texte : un `state` et des
+questions typées en entrée, des probabilités calibrées en sortie. Ils ont
+désormais leur famille, à côté du chat, plutôt que d'être tordus dans
+`complete()`.
+
+- Troisième protocole, `systemone` (`POST …/v1/systemone`), et deux
+  fournisseurs qui le parlent à l'identique : `typesafe` (`TYPESAFE_API_KEY`)
+  et `openrouter_systemone` (`OPENROUTER_API_KEY`, même clé que le chat
+  d'OpenRouter). Trois modèles : `jev` (`jev-latest`), `jev-1.13` (épinglé),
+  `or-jev` (`typesafe/jev-1.13`).
+- `decide()` / `tryDecide()` en TypeScript ; `decide()` / `adecide()` /
+  `try_decide()` / `atry_decide()` en Python. Fabriques `noul()`, `choice()`,
+  `score()` ; en TypeScript, les options d'un `choice` typent la réponse.
+- `Decision` : réponses typées, `servedModel` / `served_model` (la version qui
+  a répondu, à journaliser avec les seuils de confiance), `requestId`, usage,
+  coût, latence, tentatives.
+- Coût : celui facturé (`usage.cost` d'OpenRouter) quand il est rendu, sinon le
+  tarif du registre. `price_out: 0` est désormais accepté par le générateur,
+  pour un modèle System One seulement.
+- Résolution par famille : `LLM_MODEL_DECIDE`, puis `LLM_MODEL` s'il désigne un
+  modèle System One, puis « une seule clé System One présente ». Une clé
+  TypeSafe ne devient jamais le défaut de `complete()` ; `complete()` sur Jev et
+  `decide()` sur un modèle de chat lèvent `CapabilityError` avant l'envoi.
+- `LLM_API_KEY` et `LLM_BASE_URL` (serveur de chat compatible) ne sont plus
+  appliqués à un fournisseur System One : ils auraient envoyé la requête, ou la
+  clé, au mauvais service.
+- Base `…/v1` ou racine nue (convention des SDK TypeSafe,
+  `TYPESAFE_BASE_URL=https://openrouter.ai/api`) : les deux mènent au bon
+  endpoint.
+- Hooks `on_decision` / `onDecision`, ligne de log dédiée, double de test
+  `decision_reply` / `decisionReply`.
+- Python : `httpx2` devient une dépendance déclarée (les SDK Anthropic et OpenAI
+  la tiraient déjà).
+
+### Divers
+
+- Un 422 de validation (`detail: [{loc, msg}]`) donne un message qui nomme
+  chaque champ fautif.
+- `format_cost` / `formatCost` : deux chiffres significatifs sous 0,0001 $ —
+  une décision coûte ~0,00001 $, et « $0.0000 » ne disait rien.
+- `providall models` : colonne `provider` élargie, rappel de
+  `LLM_MODEL_DECIDE`.
+
 ## [0.3.1]
 
 ### Python : deux paramètres que le SDK refusait avant l'envoi

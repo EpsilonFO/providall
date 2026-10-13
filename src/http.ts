@@ -106,6 +106,20 @@ export function extractApiMessage(text: string): string {
       j["message"] ??
       j["detail"];
     if (typeof message === "string" && message) return message.slice(0, 400);
+    // 422 de validation (TypeSafe) : `detail` est une liste `{ loc, msg }` dont
+    // chaque entrée nomme le champ fautif — c'est lui qu'il faut corriger.
+    const details = j["detail"];
+    if (Array.isArray(details) && details.length) {
+      return details
+        .map((d) => {
+          const e = (typeof d === "object" && d !== null ? d : {}) as Record<string, unknown>;
+          const ou = Array.isArray(e["loc"]) ? e["loc"].join(".") : "";
+          const quoi = typeof e["msg"] === "string" ? e["msg"] : JSON.stringify(d);
+          return ou ? `${ou} : ${quoi}` : quoi;
+        })
+        .join(" ; ")
+        .slice(0, 400);
+    }
   } catch {
     // pas du JSON : on garde le texte brut
   }

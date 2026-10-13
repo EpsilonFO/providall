@@ -65,6 +65,19 @@ export declare function anthropicReply(text?: string, opts?: {
 }): Response;
 export declare function toolCall(name: string, args: Record<string, unknown>, id?: string): Record<string, unknown>;
 export declare function jsonReply(payload: unknown, opts?: Parameters<typeof chatReply>[1]): Response;
+/**
+ * Réponse System One. Les réponses se donnent sous la forme qu'elles ont sur le
+ * fil (`{ type: "noul", noul: 0.9 }`…) ; `cost` imite le `usage.cost`
+ * d'OpenRouter, `id` son identifiant de génération.
+ */
+export declare function decisionReply(answers: Record<string, Record<string, unknown>>, opts?: {
+    model?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    cost?: number;
+    id?: string;
+    requestId?: string;
+}): Response;
 /** Environnement de test minimal : une clé, un modèle, rien d'autre. */
 export declare function testEnv(extra?: Env): Env;
 //# sourceMappingURL=testing.d.ts.map

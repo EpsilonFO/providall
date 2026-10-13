@@ -7,6 +7,8 @@ et fausse la comparaison sans que personne ne le voie.
 
 from __future__ import annotations
 
+import math
+
 from .types import ModelSpec, Usage
 
 # L'écriture de cache est facturée 1,25× le tarif d'entrée chez Anthropic.
@@ -31,7 +33,11 @@ def format_cost(cost: float | None) -> str:
     if cost is None:
         return "$?"
     # Quatre décimales : un appel court coûte quelques dixièmes de centime, et
-    # « $0.00 » ne dit rien.
+    # « $0.00 » ne dit rien. En dessous du centième de centime (une décision
+    # Jev coûte ~0,00001 $), deux chiffres significatifs : « $0.0000 » ne dirait
+    # rien non plus.
+    if 0 < cost < 1e-4:
+        return f"${cost:.{1 - math.floor(math.log10(cost))}f}"
     return f"${cost:.4f}"
 
 
