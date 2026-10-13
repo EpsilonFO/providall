@@ -2,7 +2,7 @@
  * Registre : providers, modèles, et l'échappatoire `provider:model_id`.
  *
  * Trois étages, du plus stable au plus volatil :
- *   - PROTOCOL_DEFAULTS : ce que le protocole garantit. Deux entrées.
+ *   - PROTOCOL_DEFAULTS : ce que le protocole garantit. Trois entrées.
  *   - providers          : protocole, adresse, nom de clé, écarts au protocole.
  *   - modèles            : alias, identifiant, tarif. Une ligne par modèle.
  *
@@ -22,6 +22,10 @@ type ProtocolDefaults = {
  * une valeur recopiée est une valeur qui ne suivra pas la prochaine correction.
  */
 export declare const PROTOCOL_DEFAULTS: Record<Protocol, ProtocolDefaults>;
+/** Modèle de décision (famille System One) : `decide()` oui, `complete()` non. */
+export declare function isSystemOne(target: {
+    protocol: Protocol;
+}): boolean;
 export declare const PROVIDERS: Map<string, ProviderSpec>;
 export type SpecOverrides = {
     priceIn?: number | null;

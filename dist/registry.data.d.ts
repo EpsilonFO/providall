@@ -167,6 +167,24 @@ export declare const PROVIDERS_DATA: {
         };
         readonly note: "n'importe quel serveur /chat/completions : poser LLM_BASE_URL (et LLM_MODEL)";
     };
+    readonly typesafe: {
+        readonly protocol: "systemone";
+        readonly base_url: "https://api.typesafe.ai/v1";
+        readonly api_key_env: "TYPESAFE_API_KEY";
+        readonly aliases: readonly [];
+        readonly default_model: "jev-latest";
+        readonly key_url: "https://console.typesafe.ai/keys";
+        readonly note: "famille System One : POST /v1/systemone (state + questions typées), aucune sortie texte — seul decide() l'atteint";
+    };
+    readonly openrouter_systemone: {
+        readonly protocol: "systemone";
+        readonly base_url: "https://openrouter.ai/api/v1";
+        readonly api_key_env: "OPENROUTER_API_KEY";
+        readonly aliases: readonly [];
+        readonly default_model: "typesafe/jev-1.13";
+        readonly key_url: "https://openrouter.ai/settings/keys";
+        readonly note: "System One API d'OpenRouter : format TypeSafe à l'identique, plus `id`, `provider` et `usage.cost` (coût facturé, préféré au tarif du registre). Même clé que `openrouter`, autre protocole";
+    };
 };
 export declare const MODELS_DATA: {
     readonly opus: {
@@ -362,6 +380,30 @@ export declare const MODELS_DATA: {
             };
         };
         readonly note: "k2.7 n'existe pas chez OpenRouter (seul k2.7-code) ; relevé le 2026-08-28";
+    };
+    readonly jev: {
+        readonly provider: "typesafe";
+        readonly model_id: "jev-latest";
+        readonly price_in: 0.042;
+        readonly price_out: 0;
+        readonly id_verified: false;
+        readonly note: "System One. Alias mobile de TypeSafe (jev-1.13.0 au 2026-10-13) : épingler `jev-1.13` si des seuils de confiance ont été calés. Sortie non facturée ; contexte 64k (32k pour state + la plus longue question)";
+    };
+    readonly "jev-1.13": {
+        readonly provider: "typesafe";
+        readonly model_id: "jev-1.13.0";
+        readonly price_in: 0.042;
+        readonly price_out: 0;
+        readonly id_verified: false;
+        readonly note: "System One, version épinglée — page Models de TypeSafe, relevé le 2026-10-13";
+    };
+    readonly "or-jev": {
+        readonly provider: "openrouter_systemone";
+        readonly model_id: "typesafe/jev-1.13";
+        readonly price_in: 0.042;
+        readonly price_out: 0;
+        readonly id_verified: false;
+        readonly note: "System One via OpenRouter : id et tarif relevés sur /api/v1/models/typesafe/jev-1.13/endpoints le 2026-10-13 ; le coût réel vient de `usage.cost`";
     };
 };
 /** Alias du registre, en type littéral : une faute de frappe se voit à la compilation. */

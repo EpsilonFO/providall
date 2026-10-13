@@ -26,7 +26,7 @@ from .config import (
     normalize_effort,
     resolve,
 )
-from .errors import MissingKeyError, ProvidallError
+from .errors import CapabilityError, MissingKeyError, ProvidallError
 from .pricing import compute_cost
 from .providers import adapter_for
 from .providers.base import (
@@ -37,6 +37,7 @@ from .providers.base import (
     map_exception,
     normalize_prompt,
 )
+from .registry import is_system_one
 from .retry import RetryPolicy, arun_with_retry, run_with_retry
 from .stream import Done, StreamEvent
 from .types import Effort, ModelSpec, Prompt, Response, ToolChoice
@@ -128,6 +129,14 @@ class Client:
         defauts = env_defaults(self.env)
         resolution = resolve(model or self.model, role=role or self.role, env=self.env)
         spec = resolution.spec
+        # Avant même la clé : « pose TYPESAFE_API_KEY » serait le mauvais conseil.
+        if is_system_one(spec):
+            raise CapabilityError(
+                "génération de texte",
+                provider=spec.provider,
+                model=spec.alias,
+                hint="modèle System One : il répond à des questions typées, passer par decide()",
+            )
 
         cle = api_key or self.api_key or api_key_for(spec, self.env)
         if not cle and spec.requires_key:

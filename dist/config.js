@@ -11,25 +11,34 @@
  *   > LLM_PROVIDER              (compat agenda)
  *   > une seule clé *_API_KEY présente → defaultModel de ce provider
  *   > ConfigError listant alias et providers
+ *
+ * C'est la résolution de la famille chat. `decide()` a la sienne
+ * (`resolveDecision`), qui ne regarde que les fournisseurs System One.
  */
 import { envNum, envStr, defaultEnv, normalizeEffort } from "./env.js";
 import { ConfigError, UnknownModelError } from "./errors.js";
-import { MODELS, PROVIDERS, findProvider, priceKnown, resolveSpec } from "./registry.js";
+import { MODELS, PROVIDERS, findProvider, isSystemOne, priceKnown, resolveSpec, } from "./registry.js";
 export const DEFAULT_TIMEOUT_MS = 600_000;
 export const DEFAULT_RETRIES = 2;
 function roleVar(role) {
     return `LLM_MODEL_${role.trim().toUpperCase().replace(/-/g, "_")}`;
 }
 /**
- * Providers dont la clé est posée, dédupliqués par nom de variable.
+ * Providers dont la clé est posée, dédupliqués par nom de variable, dans UNE
+ * famille.
  *
  * `zai` et `zai_anthropic` partagent `ZAI_API_KEY` : ce n'est pas une
- * ambiguïté pour l'utilisateur, on garde le premier déclaré.
+ * ambiguïté pour l'utilisateur, on garde le premier déclaré. La famille, elle,
+ * sépare : `TYPESAFE_API_KEY` seule ne doit pas faire partir `complete()` vers
+ * un modèle qui ne produit pas de texte, et `OPENROUTER_API_KEY` seule désigne
+ * le chat d'OpenRouter pour `complete()` ET Jev chez OpenRouter pour `decide()`.
  */
-function providersWithKey(env) {
+function providersWithKey(env, systemOne) {
     const vus = new Set();
     const trouves = [];
     for (const [nom, p] of PROVIDERS) {
+        if (isSystemOne(p) !== systemOne)
+            continue;
         // Un provider sans clé (ollama, openai_compat) n'est jamais un défaut
         // implicite : il faudrait aussi deviner base_url et modèle.
         if (!p.requiresKey || !p.defaultModel)
@@ -86,7 +95,7 @@ export function resolve(name, opts = {}) {
             source: `LLM_PROVIDER (${provider.name})`,
         };
     }
-    const candidats = providersWithKey(env);
+    const candidats = providersWithKey(env, false);
     if (candidats.length === 1) {
         const provider = PROVIDERS.get(candidats[0]);
         return {
@@ -106,6 +115,77 @@ export function resolve(name, opts = {}) {
 export function resolveModel(name, opts = {}) {
     return resolve(name, opts).spec;
 }
+/** Modèle de `decide()`. Le pendant de `LLM_MODEL` pour la famille System One. */
+export const DECISION_MODEL_VAR = "LLM_MODEL_DECIDE";
+/**
+ * Résolution de la famille System One, pour `decide()` :
+ *
+ *     argument explicite
+ *   > LLM_MODEL_<ROLE>          (rôle passé à l'appel)
+ *   > LLM_MODEL_DECIDE
+ *   > LLM_MODEL, s'il désigne un modèle System One
+ *   > une seule clé System One présente → defaultModel de ce provider
+ *   > ConfigError
+ *
+ * `LLM_MODEL` désigne d'ordinaire le modèle de chat : il est SAUTÉ, pas
+ * refusé, quand il n'est pas System One. Ce que désignent les trois premiers
+ * étages est rendu tel quel — c'est `prepareDecision()` qui refuse un modèle
+ * de chat, avec un message qui dit quoi faire.
+ */
+export function resolveDecision(name, opts = {}) {
+    const env = opts.env ?? defaultEnv();
+    if (name)
+        return { spec: resolveSpec(name), source: "argument" };
+    if (opts.role) {
+        const variable = roleVar(opts.role);
+        const depuisRole = envStr(variable, env);
+        if (depuisRole)
+            return { spec: resolveSpec(depuisRole), source: variable };
+    }
+    const dedie = envStr(DECISION_MODEL_VAR, env);
+    if (dedie)
+        return { spec: resolveSpec(dedie), source: DECISION_MODEL_VAR };
+    const general = envStr("LLM_MODEL", env);
+    if (general) {
+        const s = specOrNull(general);
+        if (s && isSystemOne(s))
+            return { spec: s, source: "LLM_MODEL" };
+    }
+    const candidats = providersWithKey(env, true);
+    if (candidats.length === 1) {
+        const provider = PROVIDERS.get(candidats[0]);
+        return {
+            spec: resolveSpec(`${provider.name}:${provider.defaultModel}`),
+            source: `seule clé System One présente (${provider.apiKeyEnv})`,
+        };
+    }
+    const modeles = [...MODELS.values()]
+        .filter(isSystemOne)
+        .map((m) => m.alias)
+        .sort()
+        .join(", ");
+    if (candidats.length > 1) {
+        throw new ConfigError("plusieurs clés System One présentes (" +
+            candidats.map((c) => PROVIDERS.get(c).apiKeyEnv).join(", ") +
+            `) : poser ${DECISION_MODEL_VAR} pour trancher.\n` +
+            `  modèles System One : ${modeles}`);
+    }
+    const cles = [
+        ...new Set([...PROVIDERS.values()].filter(isSystemOne).map((p) => p.apiKeyEnv)),
+    ].join(" ou ");
+    throw new ConfigError(`aucun modèle System One : poser ${DECISION_MODEL_VAR} (${modeles}) ` +
+        `et la clé de son fournisseur (${cles}).`);
+}
+function specOrNull(name) {
+    try {
+        return resolveSpec(name);
+    }
+    catch (err) {
+        if (err instanceof UnknownModelError)
+            return null;
+        throw err;
+    }
+}
 /**
  * URL de base effective, et d'où elle vient.
  *
@@ -117,7 +197,10 @@ export function baseUrlFor(spec, env = defaultEnv()) {
     const depuisProvider = envStr(variable, env);
     if (depuisProvider)
         return [depuisProvider, variable];
-    const generique = envStr("LLM_BASE_URL", env);
+    // Les replis génériques `LLM_BASE_URL` et `LLM_API_KEY` désignent un serveur
+    // de CHAT compatible : les appliquer à un fournisseur System One enverrait
+    // la requête — ou la clé — au mauvais service.
+    const generique = isSystemOne(spec) ? undefined : envStr("LLM_BASE_URL", env);
     if (generique)
         return [generique, "LLM_BASE_URL"];
     if (!spec.baseUrl) {
@@ -125,9 +208,13 @@ export function baseUrlFor(spec, env = defaultEnv()) {
     }
     return [spec.baseUrl, "registre"];
 }
-/** Clé du provider, `LLM_API_KEY` en repli. Vide autorisée si `requiresKey` est faux. */
+/**
+ * Clé du provider, `LLM_API_KEY` en repli (famille chat seulement). Vide
+ * autorisée si `requiresKey` est faux.
+ */
 export function apiKeyFor(spec, env = defaultEnv()) {
-    return envStr(spec.apiKeyEnv, env) ?? envStr("LLM_API_KEY", env) ?? "";
+    const repli = isSystemOne(spec) ? undefined : envStr("LLM_API_KEY", env);
+    return envStr(spec.apiKeyEnv, env) ?? repli ?? "";
 }
 export function keyPresent(spec, env = defaultEnv()) {
     return !spec.requiresKey || Boolean(apiKeyFor(spec, env));

@@ -8,6 +8,8 @@ license = { text = "MIT" }
 authors = [{ name = "Félix Ollivier" }]
 dependencies = [
     "anthropic>=1.0.0",
+    # Transport de la famille System One (decide()) ; déjà tiré par les deux SDK.
+    "httpx2>=2.12",
     "openai>=3.0.0",
     "pydantic>=2.10",
     "python-dotenv>=1.0.0",

@@ -11,10 +11,11 @@
  */
 import { DEFAULT_RETRIES, DEFAULT_TIMEOUT_MS, apiKeyFor, baseUrlFor, envDefaults, resolve, } from "./config.js";
 import { defaultEnv, envBool, normalizeEffort } from "./env.js";
-import { MissingKeyError, ProvidallError, toProvidallError } from "./errors.js";
+import { CapabilityError, MissingKeyError, ProvidallError, toProvidallError } from "./errors.js";
 import { postJson, readSse, retry } from "./http.js";
 import { consoleLogger, logLine, silentLogger } from "./log.js";
 import { computeCost } from "./pricing.js";
+import { isSystemOne } from "./registry.js";
 import { adapterFor } from "./providers/index.js";
 import { baseResponse, checkCapabilities, normalizePrompt } from "./providers/adapter.js";
 import { toTextStream } from "./stream.js";
@@ -35,6 +36,14 @@ export function prepare(input, opts = {}) {
     const env = opts.env ?? defaultEnv();
     const defauts = envDefaults(env);
     const { spec } = resolve(opts.model, { role: opts.role, env });
+    // Avant même la clé : « pose TYPESAFE_API_KEY » serait le mauvais conseil.
+    if (isSystemOne(spec)) {
+        throw new CapabilityError("génération de texte", {
+            provider: spec.provider,
+            model: spec.alias,
+            hint: "modèle System One : il répond à des questions typées, passer par decide()",
+        });
+    }
     const cle = opts.apiKey ?? apiKeyFor(spec, env);
     if (!cle && spec.requiresKey) {
         throw new MissingKeyError(spec.apiKeyEnv, { provider: spec.provider, keyUrl: spec.keyUrl });

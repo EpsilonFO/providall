@@ -56,14 +56,14 @@ export function modelsTable(env = defaultEnv(), onlyAvailable = false) {
         lignes.push(`modèle par défaut : aucun — ${message}`);
     }
     lignes.push("");
-    lignes.push(`${pad("alias", 15)} ${pad("provider", 14)} ${pad("identifiant", 24)} ` +
+    lignes.push(`${pad("alias", 15)} ${pad("provider", 20)} ${pad("identifiant", 24)} ` +
         `${padStart("$/Mtok in/out", 15)} ${pad("clé", 5)} ${pad("id vérifié", 11)} note`);
-    lignes.push("-".repeat(130));
+    lignes.push("-".repeat(136));
     for (const spec of listModels(env, onlyAvailable)) {
         const tarif = priceKnown(spec)
             ? `${padStart(spec.priceIn.toFixed(2), 7)}/${pad(spec.priceOut.toFixed(2), 7)}`
             : `${padStart("?", 7)}/${pad("?", 7)}`;
-        lignes.push(`${pad(spec.alias, 15)} ${pad(spec.provider, 14)} ${pad(spec.modelId, 24)} ${tarif} ` +
+        lignes.push(`${pad(spec.alias, 15)} ${pad(spec.provider, 20)} ${pad(spec.modelId, 24)} ${tarif} ` +
             `${pad(keyPresent(spec, env) ? "oui" : "NON", 5)} ` +
             `${pad(spec.idVerified ? "oui" : "À VÉRIFIER", 11)} ${spec.note}`);
     }
@@ -78,6 +78,7 @@ export function modelsTable(env = defaultEnv(), onlyAvailable = false) {
     lignes.push("Changer de modèle : LLM_MODEL=<alias> dans .env, ou");
     lignes.push("LLM_MODEL=<provider>:<identifiant> pour un modèle hors registre");
     lignes.push("(ex. LLM_MODEL=zai:glm-5.4-flash, ou LLM_MODEL=openrouter:z-ai/glm-4.6).");
+    lignes.push("Modèles System One (decide(), pas complete()) : LLM_MODEL_DECIDE=<alias>.");
     return lignes.join("\n");
 }
 function describeCaps(spec) {

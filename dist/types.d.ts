@@ -13,7 +13,12 @@
 import type { ProvidallError } from "./errors.js";
 export type Effort = "none" | "low" | "medium" | "high" | "xhigh" | "max";
 export declare const EFFORTS: readonly Effort[];
-export type Protocol = "anthropic" | "openai_compat";
+/**
+ * Deux familles. Chat : `anthropic`, `openai_compat` — `complete()` et ses
+ * dérivés. System One : `systemone` — `decide()` seulement, puisqu'un modèle de
+ * décision ne produit pas de texte.
+ */
+export type Protocol = "anthropic" | "openai_compat" | "systemone";
 export type Structured = "json_schema" | "json_object" | "prompt";
 export type Thinking = "adaptive" | "budget" | "none";
 export type Role = "system" | "user" | "assistant" | "tool";
@@ -240,5 +245,107 @@ export type CompleteOptions = {
      */
     extraBody?: Record<string, unknown>;
     onResponse?: (response: Response) => void;
+};
+/**
+ * Ce que le modèle évalue : du texte, ou des données structurées (journal de
+ * conversation, fiche, état de l'application). Texte seulement — pas d'image.
+ */
+export type DecisionState = string | Record<string, unknown> | unknown[];
+/**
+ * Consigne d'une question, d'un critère ou d'un niveau. Un objet permet de
+ * mettre la question dans un champ et les données qu'elle cite dans d'autres.
+ */
+export type Instructions = string | Record<string, unknown> | unknown[];
+/** Oui/non : rend la probabilité du oui. */
+export type NoulQuestion = {
+    type: "noul";
+    instructions: Instructions;
+    criteria?: {
+        true?: Instructions;
+        false?: Instructions;
+    };
+};
+/** Une option parmi celles qu'on définit (255 au plus côté TypeSafe). */
+export type ChoiceQuestion<O extends string = string> = {
+    type: "choice";
+    instructions: Instructions;
+    criteria: Record<O, Instructions | null>;
+};
+/** Position sur une échelle ordonnée (2 à 10 niveaux côté TypeSafe). */
+export type ScoreQuestion = {
+    type: "score";
+    instructions: Instructions;
+    criteria: Instructions[];
+};
+export type Question = NoulQuestion | ChoiceQuestion | ScoreQuestion;
+/** Les clés sont libres ; les réponses reviennent sous les mêmes clés. */
+export type Questions = Record<string, Question>;
+export type NoulAnswer = {
+    type: "noul";
+    noul: number;
+};
+export type ChoiceAnswer<O extends string = string> = {
+    type: "choice";
+    /** L'option la plus probable. */
+    choice: O;
+    probabilities: Record<O, number>;
+    /** Certitude dérivée de la distribution — à ne pas confondre avec la probabilité du choix. */
+    confidence: number;
+};
+export type ScoreAnswer = {
+    type: "score";
+    /** Moyenne pondérée des niveaux, indexés à partir de 0 : peut tomber entre deux. */
+    score: number;
+    /** Indice du niveau (en chaîne) → son libellé. */
+    legend: Record<string, string>;
+    probabilities: Record<string, number>;
+    confidence: number;
+};
+export type Answer = NoulAnswer | ChoiceAnswer | ScoreAnswer;
+/** Type de réponse attendu pour une question donnée. */
+export type AnswerFor<Q> = Q extends ChoiceQuestion<infer O> ? ChoiceAnswer<O> : Q extends ScoreQuestion ? ScoreAnswer : Q extends NoulQuestion ? NoulAnswer : Answer;
+export type Answers<Q extends Questions> = {
+    [K in keyof Q]: AnswerFor<Q[K]>;
+};
+/** Retour de `decide()`, quel que soit le fournisseur System One. */
+export type Decision<Q extends Questions = Questions> = {
+    answers: Answers<Q>;
+    usage: Usage;
+    /**
+     * Coût FACTURÉ quand le fournisseur le rend (`usage.cost` chez OpenRouter),
+     * sinon calculé au tarif du registre ; `null` si l'un et l'autre manquent.
+     */
+    costUsd: number | null;
+    latencyMs: number;
+    /** Identifiant envoyé au fournisseur (`jev-latest`). */
+    model: string;
+    /**
+     * Version qui a réellement répondu (`jev-1.13.0`). Un alias comme
+     * `jev-latest` bouge à chaque release : c'est celle-ci qu'il faut journaliser
+     * à côté des seuils de confiance.
+     */
+    servedModel: string;
+    alias: string | null;
+    provider: string;
+    attempts: number;
+    /** `x-typesafe-request-id`, ou l'`id` de génération d'OpenRouter. */
+    requestId: string | null;
+    raw: unknown;
+};
+export type DecideOptions = {
+    model?: string;
+    role?: string;
+    timeoutMs?: number;
+    retries?: number;
+    label?: string;
+    signal?: AbortSignal;
+    fetch?: FetchLike;
+    env?: Env;
+    logger?: Logger;
+    apiKey?: string;
+    baseUrl?: string;
+    /** Ajouté tel quel au corps, après tout le reste. Même règle que `CompleteOptions.extraBody`. */
+    extraBody?: Record<string, unknown>;
+    onDecision?: (decision: Decision) => void;
 };
 //# sourceMappingURL=types.d.ts.map

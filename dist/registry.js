@@ -2,7 +2,7 @@
  * Registre : providers, modèles, et l'échappatoire `provider:model_id`.
  *
  * Trois étages, du plus stable au plus volatil :
- *   - PROTOCOL_DEFAULTS : ce que le protocole garantit. Deux entrées.
+ *   - PROTOCOL_DEFAULTS : ce que le protocole garantit. Trois entrées.
  *   - providers          : protocole, adresse, nom de clé, écarts au protocole.
  *   - modèles            : alias, identifiant, tarif. Une ligne par modèle.
  *
@@ -61,7 +61,34 @@ export const PROTOCOL_DEFAULTS = {
         maxTokens: 16000,
         effort: null,
     },
+    // Famille System One : aucune des capacités d'un modèle de chat. Elles ne
+    // servent qu'à ce qu'un `complete()` égaré échoue proprement — `prepare()`
+    // le refuse de toute façon avant.
+    systemone: {
+        caps: {
+            tools: false,
+            structured: "prompt",
+            effort: false,
+            thinking: "none",
+            vision: false,
+            temperature: false,
+            forced_tool_choice: false,
+            stream: false,
+        },
+        wire: {
+            maxTokensParam: "max_tokens",
+            effortParam: null,
+            effortValues: [],
+            thinkingToggle: null,
+        },
+        maxTokens: 0,
+        effort: null,
+    },
 };
+/** Modèle de décision (famille System One) : `decide()` oui, `complete()` non. */
+export function isSystemOne(target) {
+    return target.protocol === "systemone";
+}
 /** Les clés du JSON sont snake_case (partagées avec Python) ; le wire est camelCase ici. */
 const WIRE_KEYS = {
     max_tokens_param: "maxTokensParam",

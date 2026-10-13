@@ -9,6 +9,9 @@ Le modèle vient de `LLM_MODEL` dans le `.env` (`sonnet`, `ds-flash`, ou
 `provider:identifiant` pour un modèle qui vient de sortir). Avec une seule clé
 `*_API_KEY` posée, même `LLM_MODEL` est facultatif.
 
+Pour un modèle de décision (System One : Jev), `decide()` remplace
+`complete()` — questions typées en entrée, probabilités en sortie.
+
 Rien n'est lu à l'import : le premier appel charge `.env` puis `.env.local`
 sans écraser l'environnement du process.
 """
@@ -29,7 +32,8 @@ from .client import (
 from .client import (
     stream as _stream_fn,
 )
-from .config import Resolution, resolve_model
+from .config import Resolution, resolve_decision, resolve_model
+from .decide import adecide, atry_decide, choice, decide, noul, prepare_decision, score, try_decide
 from .env import load_env
 from .errors import (
     APIError,
@@ -49,10 +53,11 @@ from .errors import (
     ServerError,
     UnknownModelError,
 )
-from .hooks import on_response
+from .hooks import on_decision, on_response
 from .pricing import compute_cost
 from .providers.base import Request, ToolDef
 from .registry import (
+    is_system_one,
     list_models,
     list_providers,
     register_model,
@@ -65,12 +70,17 @@ from .schema import json_schema, parse_json_loose
 from .stream import Done, ReasoningDelta, StreamEvent, TextDelta, ToolCallDelta
 from .tools import Tool, ToolLoopResult, tool
 from .types import (
+    Answer,
     Caps,
+    ChoiceAnswer,
+    Decision,
     Effort,
     Message,
     ModelSpec,
+    NoulAnswer,
     ProviderSpec,
     Response,
+    ScoreAnswer,
     StructuredResponse,
     ToolCall,
     TryStructured,
@@ -109,12 +119,15 @@ async def atool_loop(prompt: Any, *, tools: Any, **kw: Any) -> ToolLoopResult:
 
 __all__ = [
     "APIError",
+    "Answer",
     "AuthError",
     "BadRequestError",
     "CapabilityError",
     "Caps",
+    "ChoiceAnswer",
     "Client",
     "ConfigError",
+    "Decision",
     "Done",
     "Effort",
     "EmptyResponseError",
@@ -124,6 +137,7 @@ __all__ = [
     "ModelSpec",
     "NetworkError",
     "NotFoundError",
+    "NoulAnswer",
     "OutputValidationError",
     "ProvidallError",
     "ProviderSpec",
@@ -134,6 +148,7 @@ __all__ = [
     "Resolution",
     "Response",
     "RetryPolicy",
+    "ScoreAnswer",
     "ServerError",
     "StreamEvent",
     "StructuredResponse",
@@ -150,30 +165,41 @@ __all__ = [
     "__version__",
     "acomplete",
     "acomplete_json",
+    "adecide",
     "astream",
     "atool_loop",
     "atry_complete",
     "atry_complete_json",
+    "atry_decide",
+    "choice",
     "complete",
     "complete_json",
     "compute_cost",
+    "decide",
     "default_client",
+    "is_system_one",
     "json_schema",
     "list_models",
     "list_providers",
     "load_env",
+    "noul",
+    "on_decision",
     "on_response",
     "parse_json_loose",
+    "prepare_decision",
     "register_model",
     "register_provider",
+    "resolve_decision",
     "resolve_model",
     "resolve_spec",
+    "score",
     "spec",
     "stream",
     "tool",
     "tool_loop",
     "try_complete",
     "try_complete_json",
+    "try_decide",
 ]
 
 # `from .stream import …` (plus haut) importe aussi le SOUS-MODULE

@@ -1,7 +1,7 @@
 """Registre : providers, modèles, et l'échappatoire `provider:model_id`.
 
 Trois étages, du plus stable au plus volatil :
-  - PROTOCOL_DEFAULTS : ce que le protocole garantit. Deux entrées, qui ne
+  - PROTOCOL_DEFAULTS : ce que le protocole garantit. Trois entrées, qui ne
     bougent pas d'une année sur l'autre.
   - providers          : protocole, adresse, nom de clé, écarts au protocole.
   - modèles            : alias, identifiant, tarif. Une ligne par modèle.
@@ -65,7 +65,34 @@ PROTOCOL_DEFAULTS: dict[str, dict[str, Any]] = {
         },
         "defaults": {"max_tokens": 16000, "effort": None},
     },
+    # Famille System One : aucune des capacités d'un modèle de chat. Elles ne
+    # servent qu'à ce qu'un `complete()` égaré échoue proprement — `prepare()`
+    # le refuse de toute façon avant.
+    "systemone": {
+        "caps": {
+            "tools": False,
+            "structured": "prompt",
+            "effort": False,
+            "thinking": "none",
+            "vision": False,
+            "temperature": False,
+            "forced_tool_choice": False,
+            "stream": False,
+        },
+        "wire": {
+            "max_tokens_param": "max_tokens",
+            "effort_param": None,
+            "effort_values": [],
+            "thinking_toggle": None,
+        },
+        "defaults": {"max_tokens": 0, "effort": None},
+    },
 }
+
+
+def is_system_one(target: ModelSpec | ProviderSpec) -> bool:
+    """Modèle de décision (famille System One) : `decide()` oui, `complete()` non."""
+    return target.protocol == "systemone"
 
 
 def _caps(protocol: str, *couches: dict[str, Any] | None) -> Caps:
@@ -305,6 +332,7 @@ __all__ = [
     "PROVIDERS",
     "clamp_effort",
     "find_provider",
+    "is_system_one",
     "list_models",
     "list_providers",
     "register_model",

@@ -5,7 +5,8 @@
     "",
     "`price_in`/`price_out` sont en dollars par million de jetons. ABSENTS =",
     "tarif inconnu : `cost_usd` vaudra alors null, jamais un faux 0. Ne jamais",
-    "écrire 0 pour dire « je ne sais pas ».",
+    "écrire 0 pour dire « je ne sais pas ». Seule exception : `price_out: 0`",
+    "d'un modèle System One, dont la sortie n'est réellement pas facturée.",
     "",
     "`id_verified: false` = identifiant recopié d'une annonce, jamais confirmé",
     "auprès du fournisseur. La CLI l'affiche « À VÉRIFIER ».",
@@ -191,5 +192,30 @@
     "price_out": 4.0,
     "overrides": { "caps": { "structured": "json_schema" } },
     "note": "k2.7 n'existe pas chez OpenRouter (seul k2.7-code) ; relevé le 2026-08-28"
+  },
+
+  "jev": {
+    "provider": "typesafe",
+    "model_id": "jev-latest",
+    "price_in": 0.042,
+    "price_out": 0,
+    "id_verified": false,
+    "note": "System One. Alias mobile de TypeSafe (jev-1.13.0 au 2026-10-13) : épingler `jev-1.13` si des seuils de confiance ont été calés. Sortie non facturée ; contexte 64k (32k pour state + la plus longue question)"
+  },
+  "jev-1.13": {
+    "provider": "typesafe",
+    "model_id": "jev-1.13.0",
+    "price_in": 0.042,
+    "price_out": 0,
+    "id_verified": false,
+    "note": "System One, version épinglée — page Models de TypeSafe, relevé le 2026-10-13"
+  },
+  "or-jev": {
+    "provider": "openrouter_systemone",
+    "model_id": "typesafe/jev-1.13",
+    "price_in": 0.042,
+    "price_out": 0,
+    "id_verified": false,
+    "note": "System One via OpenRouter : id et tarif relevés sur /api/v1/models/typesafe/jev-1.13/endpoints le 2026-10-13 ; le coût réel vient de `usage.cost`"
   }
 }

@@ -40,3 +40,18 @@ export function logLine(response, label = "") {
         morceaux.push(`error=${response.error.name}`);
     return morceaux.filter(Boolean).join(" ");
 }
+/** `[label] provider:servedModel 0.1s in=… out=… $0.000012 questions=3 attempts=1` */
+export function decisionLogLine(decision, label = "") {
+    const morceaux = [
+        label ? `[${label}]` : "",
+        `${decision.provider}:${decision.servedModel}`,
+        `${(decision.latencyMs / 1000).toFixed(1)}s`,
+        `in=${decision.usage.inputTokens}`,
+        `out=${decision.usage.outputTokens}`,
+        formatCost(decision.costUsd),
+        `questions=${Object.keys(decision.answers).length}`,
+    ];
+    if (decision.attempts > 1)
+        morceaux.push(`attempts=${decision.attempts}`);
+    return morceaux.filter(Boolean).join(" ");
+}
